@@ -52,18 +52,6 @@ class Schema extends BaseNoSqlDbSchemaResource
     }
 
     /**
-     * @param $name
-     *
-     * @return \CouchCollection|null
-     */
-    public function selectTable( $name )
-    {
-        $this->service->getConnection()->useDatabase( $name );
-
-        return $name;
-    }
-
-    /**
      * {@inheritdoc}
      */
     public function listResources($include_properties = null)
@@ -123,7 +111,7 @@ class Schema extends BaseNoSqlDbSchemaResource
 
         try
         {
-            $this->selectTable( $_name );
+            $this->service->getConnection()->useDatabase( $_name );
             $_out = $this->service->getConnection()->asArray()->getDatabaseInfos();
             $_out['name'] = $_name;
             $_out['access'] = $this->getPermissions( $_name );
@@ -150,7 +138,7 @@ class Schema extends BaseNoSqlDbSchemaResource
 
         try
         {
-            $this->selectTable( $table );
+            $this->service->getConnection()->useDatabase( $table );
             $this->service->getConnection()->asArray()->createDatabase();
             // $_result['ok'] = true
 
@@ -174,7 +162,7 @@ class Schema extends BaseNoSqlDbSchemaResource
             throw new BadRequestException( "No 'name' field in data." );
         }
 
-        $this->selectTable( $table );
+        $this->service->getConnection()->useDatabase( $table );
 
 //		throw new InternalServerErrorException( "Failed to update table '$_name'." );
         return array('name' => $table);
@@ -193,7 +181,7 @@ class Schema extends BaseNoSqlDbSchemaResource
 
         try
         {
-            $this->selectTable( $_name );
+            $this->service->getConnection()->useDatabase( $_name );
             $this->service->getConnection()->asArray()->deleteDatabase();
 
             // $_result['ok'] = true

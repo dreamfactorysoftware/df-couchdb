@@ -42,15 +42,6 @@ class CouchDb extends BaseNoSqlDbService
     //	Constants
     //*************************************************************************
 
-    /**
-     * Connection string prefix
-     */
-    const DSN_PREFIX = 'couchdb://';
-    /**
-     * Connection string prefix length
-     */
-    const DSN_PREFIX_LENGTH = 10;
-
     //*************************************************************************
     //	Members
     //*************************************************************************
@@ -83,7 +74,7 @@ class CouchDb extends BaseNoSqlDbService
     /**
      * Create a new CouchDbSvc
      *
-     * @param array $config
+     * @param array $settings
      *
      * @throws \InvalidArgumentException
      * @throws \Exception

@@ -86,15 +86,15 @@ class Table extends BaseDbTableResource
     /**
      * {@inheritdoc}
      */
-    public function listResources($include_properties = null)
+    public function listResources( $include_properties = null )
     {
 //        $refresh = $this->request->queryBool('refresh');
 
-        $_names = $this->service->getConnection()->getTableNames();
+        $_names = $this->service->getConnection()->listDatabases();
 
-        if (empty($include_properties))
+        if ( empty( $include_properties ) )
         {
-            return array('resource' => $_names);
+            return array( 'resource' => $_names );
         }
 
         $_extras = DbUtilities::getSchemaExtrasForTables( $this->service->getServiceId(), $_names, false, 'table,label,plural' );
@@ -116,7 +116,7 @@ class Table extends BaseDbTableResource
 
             if ( empty( $label ) )
             {
-                $label = Inflector::camelize( $name, ['_','.'], true );
+                $label = Inflector::camelize( $name, [ '_', '.' ], true );
             }
 
             if ( empty( $plural ) )
@@ -124,10 +124,10 @@ class Table extends BaseDbTableResource
                 $plural = Inflector::pluralize( $label );
             }
 
-            $_tables[] = array('name' => $name, 'label' => $label, 'plural' => $plural);
+            $_tables[] = array( 'name' => $name, 'label' => $label, 'plural' => $plural );
         }
 
-        return $this->makeResourceList($_tables, $include_properties, true);
+        return $this->makeResourceList( $_tables, $include_properties, true );
     }
 
     /**
@@ -151,23 +151,17 @@ class Table extends BaseDbTableResource
      */
     public function truncateTable( $table, $extras = array() )
     {
-        $_coll = $this->selectTable( $table );
+        $this->selectTable( $table );
         try
         {
-            // build filter string if necessary, add server-side filters if necessary
-            $_ssFilters = ArrayUtils::get( $extras, 'ss_filters' );
-            $_criteria = $this->buildCriteriaArray( array(), null, $_ssFilters );
-            $_coll->remove( $_criteria );
+            $_result = $this->service->getConnection()->asArray()->getAllDocs();
+            $this->service->getConnection()->asArray()->deleteDocs( $_result, true );
 
             return array( 'success' => true );
         }
-        catch ( RestException $_ex )
+        catch ( \Exception $ex )
         {
-            throw $_ex;
-        }
-        catch ( \Exception $_ex )
-        {
-            throw new InternalServerErrorException( "Failed to delete records from '$table'.\n{$_ex->getMessage()}" );
+            throw new InternalServerErrorException( "Failed to filter items from '$table'.\n" . $ex->getMessage() );
         }
     }
 
@@ -192,7 +186,10 @@ class Table extends BaseDbTableResource
             throw new BadRequestException( "SQL-like filters are not currently available for CouchDB.\n" );
         }
 
-        ArrayUtils::sins( $extras, 'skip', ArrayUtils::get( $extras, 'offset' ) ); // support offset
+        if (!isset( $extras, $extras['skip']))
+        {
+            $extras['skip'] = ArrayUtils::get( $extras, 'offset' ); // support offset
+        }
         $_design = ArrayUtils::get( $extras, 'design' );
         $_view = ArrayUtils::get( $extras, 'view' );
         $_includeDocs = ArrayUtils::getBool( $extras, 'include_docs' );
@@ -208,15 +205,17 @@ class Table extends BaseDbTableResource
                 if ( !$_includeDocs )
                 {
                     $_includeDocs = static::_requireMoreFields( $_fields, static::DEFAULT_ID_FIELD );
-                    ArrayUtils::sins( $extras, 'include_docs', $_includeDocs );
+                    if (!isset( $extras, $extras['skip']))
+                    {
+                        $extras['include_docs'] = $_includeDocs;
+                    }
                 }
                 $_result = $this->service->getConnection()->setQueryParameters( $extras )->asArray()->getAllDocs();
             }
 
             $_rows = ArrayUtils::get( $_result, 'rows' );
             $_out = static::cleanRecords( $_rows, $_fields, static::DEFAULT_ID_FIELD, $_includeDocs );
-            if ( ArrayUtils::getBool( $extras, 'include_count', false ) ||
-                 ( 0 != intval( ArrayUtils::get( $_result, 'offset' ) ) )
+            if ( ArrayUtils::getBool( $extras, 'include_count', false ) || ( 0 != intval( ArrayUtils::get( $_result, 'offset' ) ) )
             )
             {
                 $_out['meta']['count'] = intval( ArrayUtils::get( $_result, 'total_rows' ) );
@@ -232,9 +231,9 @@ class Table extends BaseDbTableResource
 
     protected function getIdsInfo( $table, $fields_info = null, &$requested_fields = null, $requested_types = null )
     {
-        $requested_fields = array(static::ID_FIELD); // can only be this
+        $requested_fields = array( static::ID_FIELD ); // can only be this
         $_ids = array(
-            array('name' => static::ID_FIELD, 'type' => 'string', 'required' => false),
+            array( 'name' => static::ID_FIELD, 'type' => 'string', 'required' => false ),
         );
 
         return $_ids;
@@ -281,7 +280,7 @@ class Table extends BaseDbTableResource
             true
         );
 
-        $_out = array($id_field => $_id, static::REV_FIELD => $_rev);
+        $_out = array( $id_field => $_id, static::REV_FIELD => $_rev );
 
         if ( empty( $include ) )
         {
@@ -576,10 +575,9 @@ class Table extends BaseDbTableResource
                 break;
 
             case Verbs::GET:
-                $_result =
-                    $this->service->getConnection()->setQueryParameters( $extras )->asArray()->include_docs( $_requireMore )->keys(
-                        $this->_batchIds
-                    )->getAllDocs();
+                $_result = $this->service->getConnection()->setQueryParameters( $extras )->asArray()->include_docs( $_requireMore )->keys(
+                    $this->_batchIds
+                )->getAllDocs();
                 $_rows = ArrayUtils::get( $_result, 'rows' );
                 $_out = static::cleanRecords( $_rows, $_fields, static::DEFAULT_ID_FIELD, true );
 
