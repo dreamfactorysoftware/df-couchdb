@@ -1,0 +1,59 @@
+{
+  "name": "dreamfactory/rave-couchdb",
+  "description": "The DreamFactory RAVE(tm) CouchDB Service.",
+  "keywords": [
+    "dreamfactory",
+    "dsp",
+    "rave",
+    "couch",
+    "nosql",
+    "database",
+    "db"
+  ],
+  "homepage": "https://www.dreamfactory.com/",
+  "license": "Apache-2.0",
+  "authors": [
+    {
+      "name": "Arif Islam",
+      "email": "arifislam@dreamfactory.com"
+    },
+    {
+      "name": "Jerry Ablan",
+      "email": "jerryablan@dreamfactory.com"
+    },
+    {
+      "name": "Lee Hicks",
+      "email": "leehicks@dreamfactory.com"
+    }
+  ],
+  "support": {
+    "email": "support@dreamfactory.com",
+    "issues": "https://github.com/dreamfactorysoftware/rave/issues",
+    "wiki": "https://github.com/dreamfactorysoftware/rave/wiki",
+    "source": "https://github.com/dreamfactorysoftware/rave"
+  },
+  "minimum-stability": "dev",
+  "prefer-stable": true,
+  "require": {
+    "dreamfactory/rave": "dev-develop as dev-master",
+    "dready92/php-on-couch": "*"
+  },
+  "autoload": {
+    "psr-4": {
+      "DreamFactory\\Rave\\CouchDb\\": "src/"
+    }
+  },
+  "scripts": {
+    "post-install-cmd": [
+    ],
+    "post-update-cmd": [
+    ],
+    "post-create-project-cmd": [
+    ]
+  },
+  "extra": {
+    "branch-alias": {
+      "dev-develop": "0.0.x-dev"
+    }
+  }
+}
