@@ -28,6 +28,7 @@ use DreamFactory\Rave\Exceptions\InternalServerErrorException;
 use DreamFactory\Rave\Exceptions\NotFoundException;
 use DreamFactory\Rave\Exceptions\RestException;
 use DreamFactory\Rave\Resources\BaseDbTableResource;
+use DreamFactory\Rave\Utility\ApiDocUtilities;
 use DreamFactory\Rave\Utility\DbUtilities;
 use DreamFactory\Rave\CouchDb\Services\CouchDb;
 
@@ -94,12 +95,12 @@ class Table extends BaseDbTableResource
 
         if ( empty( $include_properties ) )
         {
-            return array( 'resource' => $_names );
+            return [ 'resource' => $_names ];
         }
 
         $_extras = DbUtilities::getSchemaExtrasForTables( $this->service->getServiceId(), $_names, false, 'table,label,plural' );
 
-        $_tables = array();
+        $_tables = [ ];
         foreach ( $_names as $name )
         {
             $label = '';
@@ -124,7 +125,7 @@ class Table extends BaseDbTableResource
                 $plural = Inflector::pluralize( $label );
             }
 
-            $_tables[] = array( 'name' => $name, 'label' => $label, 'plural' => $plural );
+            $_tables[] = [ 'name' => $name, 'label' => $label, 'plural' => $plural ];
         }
 
         return $this->makeResourceList( $_tables, $include_properties, true );
@@ -133,7 +134,7 @@ class Table extends BaseDbTableResource
     /**
      * {@inheritdoc}
      */
-    public function updateRecordsByFilter( $table, $record, $filter = null, $params = array(), $extras = array() )
+    public function updateRecordsByFilter( $table, $record, $filter = null, $params = [ ], $extras = [ ] )
     {
         throw new BadRequestException( "SQL-like filters are not currently available for CouchDB.\n" );
     }
@@ -141,7 +142,7 @@ class Table extends BaseDbTableResource
     /**
      * {@inheritdoc}
      */
-    public function patchRecordsByFilter( $table, $record, $filter = null, $params = array(), $extras = array() )
+    public function patchRecordsByFilter( $table, $record, $filter = null, $params = [ ], $extras = [ ] )
     {
         throw new BadRequestException( "SQL-like filters are not currently available for CouchDB.\n" );
     }
@@ -149,7 +150,7 @@ class Table extends BaseDbTableResource
     /**
      * {@inheritdoc}
      */
-    public function truncateTable( $table, $extras = array() )
+    public function truncateTable( $table, $extras = [ ] )
     {
         $this->selectTable( $table );
         try
@@ -157,7 +158,7 @@ class Table extends BaseDbTableResource
             $_result = $this->service->getConnection()->asArray()->getAllDocs();
             $this->service->getConnection()->asArray()->deleteDocs( $_result, true );
 
-            return array( 'success' => true );
+            return [ 'success' => true ];
         }
         catch ( \Exception $ex )
         {
@@ -168,7 +169,7 @@ class Table extends BaseDbTableResource
     /**
      * {@inheritdoc}
      */
-    public function deleteRecordsByFilter( $table, $filter, $params = array(), $extras = array() )
+    public function deleteRecordsByFilter( $table, $filter, $params = [ ], $extras = [ ] )
     {
         throw new BadRequestException( "SQL-like filters are not currently available for CouchDB.\n" );
     }
@@ -176,7 +177,7 @@ class Table extends BaseDbTableResource
     /**
      * {@inheritdoc}
      */
-    public function retrieveRecordsByFilter( $table, $filter = null, $params = array(), $extras = array() )
+    public function retrieveRecordsByFilter( $table, $filter = null, $params = [ ], $extras = [ ] )
     {
         $this->selectTable( $table );
 
@@ -186,7 +187,7 @@ class Table extends BaseDbTableResource
             throw new BadRequestException( "SQL-like filters are not currently available for CouchDB.\n" );
         }
 
-        if (!isset( $extras, $extras['skip']))
+        if ( !isset( $extras, $extras['skip'] ) )
         {
             $extras['skip'] = ArrayUtils::get( $extras, 'offset' ); // support offset
         }
@@ -205,7 +206,7 @@ class Table extends BaseDbTableResource
                 if ( !$_includeDocs )
                 {
                     $_includeDocs = static::_requireMoreFields( $_fields, static::DEFAULT_ID_FIELD );
-                    if (!isset( $extras, $extras['skip']))
+                    if ( !isset( $extras, $extras['skip'] ) )
                     {
                         $extras['include_docs'] = $_includeDocs;
                     }
@@ -231,10 +232,10 @@ class Table extends BaseDbTableResource
 
     protected function getIdsInfo( $table, $fields_info = null, &$requested_fields = null, $requested_types = null )
     {
-        $requested_fields = array( static::ID_FIELD ); // can only be this
-        $_ids = array(
-            array( 'name' => static::ID_FIELD, 'type' => 'string', 'required' => false ),
-        );
+        $requested_fields = [ static::ID_FIELD ]; // can only be this
+        $_ids = [
+            [ 'name' => static::ID_FIELD, 'type' => 'string', 'required' => false ],
+        ];
 
         return $_ids;
     }
@@ -246,7 +247,7 @@ class Table extends BaseDbTableResource
      *
      * @return array
      */
-    protected static function cleanRecord( $record = array(), $include = '*', $id_field = self::DEFAULT_ID_FIELD )
+    protected static function cleanRecord( $record = [ ], $include = '*', $id_field = self::DEFAULT_ID_FIELD )
     {
         if ( '*' == $include )
         {
@@ -280,7 +281,7 @@ class Table extends BaseDbTableResource
             true
         );
 
-        $_out = array( $id_field => $_id, static::REV_FIELD => $_rev );
+        $_out = [ $id_field => $_id, static::REV_FIELD => $_rev ];
 
         if ( empty( $include ) )
         {
@@ -314,7 +315,7 @@ class Table extends BaseDbTableResource
      */
     protected static function cleanRecords( $records, $include = '*', $id_field = self::DEFAULT_ID_FIELD, $use_doc = false )
     {
-        $_out = array();
+        $_out = [ ];
 
         foreach ( $records as $_record )
         {
@@ -350,7 +351,7 @@ class Table extends BaseDbTableResource
         $_requireMore = ArrayUtils::get( $extras, 'require_more' );
         $_updates = ArrayUtils::get( $extras, 'updates' );
 
-        $_out = array();
+        $_out = [ ];
         switch ( $this->getAction() )
         {
             case Verbs::POST:
@@ -522,7 +523,7 @@ class Table extends BaseDbTableResource
         $_fields = ArrayUtils::get( $extras, 'fields' );
         $_requireMore = ArrayUtils::getBool( $extras, 'require_more' );
 
-        $_out = array();
+        $_out = [ ];
         switch ( $this->getAction() )
         {
             case Verbs::POST:
@@ -557,7 +558,7 @@ class Table extends BaseDbTableResource
                 break;
 
             case Verbs::DELETE:
-                $_out = array();
+                $_out = [ ];
                 if ( $_requireMore )
                 {
                     $_result = $this->service->getConnection()->setQueryParameters( $extras )->asArray()->include_docs( true )->keys(
@@ -591,8 +592,8 @@ class Table extends BaseDbTableResource
                 break;
         }
 
-        $this->_batchIds = array();
-        $this->_batchRecords = array();
+        $this->_batchIds = [ ];
+        $this->_batchRecords = [ ];
 
         return $_out;
     }
@@ -629,9 +630,963 @@ class Table extends BaseDbTableResource
                     break;
             }
 
-            $this->_rollbackRecords = array();
+            $this->_rollbackRecords = [ ];
         }
 
         return true;
+    }
+
+    public function getApiDocInfo()
+    {
+        $_commonResponses = ApiDocUtilities::getCommonResponses();
+        $_baseTableOps = [
+            [
+                'method'           => 'GET',
+                'summary'          => 'getRecordsByView() - Retrieve one or more records by using a view.',
+                'nickname'         => 'getRecordsByView',
+                'notes'            =>
+                    'Use the <b>design</b> and <b>view</b> parameters to retrieve data according to a view.<br/> ' .
+                    'Alternatively, to send the <b>design</b> and <b>view</b> with or without additional URL parameters as posted data ' .
+                    'use the POST request with X-HTTP-METHOD = GET header.<br/> ' .
+                    'Refer to http://docs.couchdb.org/en/latest/api/ddoc/views.html for additional allowed query parameters.<br/> ' .
+                    'Use the <b>fields</b> parameter to limit properties returned for each resource. ' .
+                    'By default, all fields are returned for all resources. ',
+                'type'             => 'RecordsResponse',
+                'event_name'       => [ '{api_name}.{table_name}.select', '{api_name}.table_selected', ],
+                'parameters'       => array_merge(
+                    [
+                        [
+                            'name'          => 'table_name',
+                            'description'   => 'Name of the table to perform operations on.',
+                            'allowMultiple' => false,
+                            'type'          => 'string',
+                            'paramType'     => 'path',
+                            'required'      => true,
+                        ],
+                        [
+                            'name'          => 'design',
+                            'description'   => 'The design document name for the desired view.',
+                            'allowMultiple' => false,
+                            'type'          => 'string',
+                            'paramType'     => 'query',
+                            'required'      => true,
+                        ],
+                        [
+                            'name'          => 'view',
+                            'description'   => 'The view function name for the given design document.',
+                            'allowMultiple' => false,
+                            'type'          => 'string',
+                            'paramType'     => 'query',
+                            'required'      => true,
+                        ],
+                        [
+                            'name'          => 'limit',
+                            'description'   => 'Set to limit the view results.',
+                            'allowMultiple' => false,
+                            'type'          => 'integer',
+                            'format'        => 'int32',
+                            'paramType'     => 'query',
+                            'required'      => false,
+                        ],
+                        [
+                            'name'          => 'skip',
+                            'description'   => 'Set to offset the view results to a particular record count.',
+                            'allowMultiple' => false,
+                            'type'          => 'integer',
+                            'format'        => 'int32',
+                            'paramType'     => 'query',
+                            'required'      => false,
+                        ],
+                        [
+                            'name'          => 'reduce',
+                            'description'   => 'Use the reduce function. Default is true.',
+                            'allowMultiple' => false,
+                            'type'          => 'boolean',
+                            'paramType'     => 'query',
+                            'required'      => false,
+                        ],
+                        [
+                            'name'          => 'include_docs',
+                            'description'   =>
+                                'Include the associated document with each row. Default is false. ' .
+                                'If set to true, just the documents as a record array will be returned, like getRecordsByIds does.',
+                            'allowMultiple' => false,
+                            'type'          => 'boolean',
+                            'paramType'     => 'query',
+                            'required'      => false,
+                        ],
+                        [
+                            'name'          => 'fields',
+                            'description'   => 'Comma-delimited list of field names to retrieve for each record, \'*\' to return all fields.',
+                            'allowMultiple' => true,
+                            'type'          => 'string',
+                            'paramType'     => 'query',
+                            'required'      => false,
+                        ],
+                        [
+                            'name'          => 'include_count',
+                            'description'   => 'Include the total number of view results as meta data.',
+                            'allowMultiple' => false,
+                            'type'          => 'boolean',
+                            'paramType'     => 'query',
+                            'required'      => false,
+                        ],
+                    ]
+                ),
+                'responseMessages' => $_commonResponses,
+            ],
+            [
+                'method'           => 'GET',
+                'summary'          => 'getRecordsByIds() - Retrieve one or more records by identifiers.',
+                'nickname'         => 'getRecordsByIds',
+                'notes'            =>
+                    'Pass the identifying field values as a comma-separated list in the <b>ids</b> parameter.<br/> ' .
+                    'Alternatively, to send the <b>ids</b> as posted data use the POST request with X-HTTP-METHOD = GET header and post array of ids.<br/> ' .
+                    'Use the <b>fields</b> parameter to limit properties returned for each resource. ' .
+                    'By default, all fields are returned for identified resources. ',
+                'type'             => 'RecordsResponse',
+                'event_name'       => [ '{api_name}.{table_name}.select', '{api_name}.table_selected', ],
+                'parameters'       => array_merge(
+                    [
+                        [
+                            'name'          => 'table_name',
+                            'description'   => 'Name of the table to perform operations on.',
+                            'allowMultiple' => false,
+                            'type'          => 'string',
+                            'paramType'     => 'path',
+                            'required'      => true,
+                        ],
+                        [
+                            'name'          => 'ids',
+                            'description'   => 'Comma-delimited list of the identifiers of the resources to retrieve.',
+                            'allowMultiple' => true,
+                            'type'          => 'string',
+                            'paramType'     => 'query',
+                            'required'      => true,
+                        ],
+                        [
+                            'name'          => 'fields',
+                            'description'   => 'Comma-delimited list of field names to retrieve for each record, \'*\' to return all fields.',
+                            'allowMultiple' => true,
+                            'type'          => 'string',
+                            'paramType'     => 'query',
+                            'required'      => false,
+                        ],
+                        [
+                            'name'          => 'id_field',
+                            'description'   =>
+                                'Single or comma-delimited list of the fields used as identifiers for the table, ' .
+                                'used to override defaults or provide identifiers when none are provisioned.',
+                            'allowMultiple' => true,
+                            'type'          => 'string',
+                            'paramType'     => 'query',
+                            'required'      => false,
+                        ],
+                        [
+                            'name'          => 'id_type',
+                            'description'   =>
+                                'Single or comma-delimited list of the field types used as identifiers for the table, ' .
+                                'used to override defaults or provide identifiers when none are provisioned.',
+                            'allowMultiple' => true,
+                            'type'          => 'string',
+                            'paramType'     => 'query',
+                            'required'      => false,
+                        ],
+                        [
+                            'name'          => 'continue',
+                            'description'   =>
+                                'In batch scenarios, where supported, continue processing even after one record fails. ' .
+                                'Default behavior is to halt and return results up to the first point of failure.',
+                            'allowMultiple' => false,
+                            'type'          => 'boolean',
+                            'paramType'     => 'query',
+                            'required'      => false,
+                        ],
+                    ]
+                ),
+                'responseMessages' => $_commonResponses,
+            ],
+            [
+                'method'           => 'POST',
+                'summary'          => 'getRecordsByPost() - Retrieve one or more records by posting necessary data.',
+                'nickname'         => 'getRecordsByPost',
+                'notes'            =>
+                    'Post data should be an array of records wrapped in a <b>record</b> element - including the identifying fields at a minimum, ' .
+                    'or a list of <b>ids</b> in a string list or an array.<br/> ' .
+                    'Use the <b>fields</b> parameter to limit properties returned for each resource. ' .
+                    'By default, all fields are returned for identified resources. ',
+                'type'             => 'RecordsResponse',
+                'event_name'       => [ '{api_name}.{table_name}.select', '{api_name}.table_selected', ],
+                'parameters'       => [
+                    [
+                        'name'          => 'table_name',
+                        'description'   => 'Name of the table to perform operations on.',
+                        'allowMultiple' => false,
+                        'type'          => 'string',
+                        'paramType'     => 'path',
+                        'required'      => true,
+                    ],
+                    [
+                        'name'          => 'body',
+                        'description'   => 'Data containing name-value pairs of records to retrieve.',
+                        'allowMultiple' => false,
+                        'type'          => 'RecordsRequest',
+                        'paramType'     => 'body',
+                        'required'      => true,
+                    ],
+                    [
+                        'name'          => 'fields',
+                        'description'   => 'Comma-delimited list of field names to retrieve for each record, \'*\' to return all fields.',
+                        'allowMultiple' => true,
+                        'type'          => 'string',
+                        'paramType'     => 'query',
+                        'required'      => false,
+                    ],
+                    [
+                        'name'          => 'id_field',
+                        'description'   =>
+                            'Single or comma-delimited list of the fields used as identifiers for the table, ' .
+                            'used to override defaults or provide identifiers when none are provisioned.',
+                        'allowMultiple' => true,
+                        'type'          => 'string',
+                        'paramType'     => 'query',
+                        'required'      => false,
+                    ],
+                    [
+                        'name'          => 'id_type',
+                        'description'   =>
+                            'Single or comma-delimited list of the field types used as identifiers for the table, ' .
+                            'used to override defaults or provide identifiers when none are provisioned.',
+                        'allowMultiple' => true,
+                        'type'          => 'string',
+                        'paramType'     => 'query',
+                        'required'      => false,
+                    ],
+                    [
+                        'name'          => 'continue',
+                        'description'   =>
+                            'In batch scenarios, where supported, continue processing even after one record fails. ' .
+                            'Default behavior is to halt and return results up to the first point of failure.',
+                        'allowMultiple' => false,
+                        'type'          => 'boolean',
+                        'paramType'     => 'query',
+                        'required'      => false,
+                    ],
+                    [
+                        'name'          => 'X-HTTP-METHOD',
+                        'description'   => 'Override request using POST to tunnel other http request, such as GET.',
+                        'enum'          => [ 'GET' ],
+                        'allowMultiple' => false,
+                        'type'          => 'string',
+                        'paramType'     => 'header',
+                        'required'      => true,
+                    ],
+                ],
+                'responseMessages' => $_commonResponses,
+            ],
+            [
+                'method'           => 'GET',
+                'summary'          => 'getRecords() - Retrieve one or more records.',
+                'nickname'         => 'getRecords',
+                'notes'            =>
+                    'Use the <b>ids</b> parameter to limit resources that are returned.<br/> ' .
+                    'Alternatively, to send the <b>ids</b> as posted data use the POST request with X-HTTP-METHOD = GET header.<br/> ' .
+                    'Use the <b>fields</b> parameter to limit properties returned for each resource. ' .
+                    'By default, all fields are returned for all resources. ',
+                'type'             => 'RecordsResponse',
+                'event_name'       => [ '{api_name}.{table_name}.select', '{api_name}.table_selected', ],
+                'parameters'       => array_merge(
+                    [
+                        [
+                            'name'          => 'table_name',
+                            'description'   => 'Name of the table to perform operations on.',
+                            'allowMultiple' => false,
+                            'type'          => 'string',
+                            'paramType'     => 'path',
+                            'required'      => true,
+                        ],
+                        [
+                            'name'          => 'ids',
+                            'description'   => 'Comma-delimited list of the identifiers of the resources to retrieve.',
+                            'allowMultiple' => true,
+                            'type'          => 'string',
+                            'paramType'     => 'query',
+                            'required'      => false,
+                        ],
+                        [
+                            'name'          => 'limit',
+                            'description'   => 'Set to limit the view results.',
+                            'allowMultiple' => false,
+                            'type'          => 'integer',
+                            'format'        => 'int32',
+                            'paramType'     => 'query',
+                            'required'      => false,
+                        ],
+                        [
+                            'name'          => 'offset',
+                            'description'   => 'Set to offset the view results to a particular record count.',
+                            'allowMultiple' => false,
+                            'type'          => 'integer',
+                            'format'        => 'int32',
+                            'paramType'     => 'query',
+                            'required'      => false,
+                        ],
+                        [
+                            'name'          => 'order',
+                            'description'   => 'SQL-like order containing field and direction for view results.',
+                            'allowMultiple' => false,
+                            'type'          => 'string',
+                            'paramType'     => 'query',
+                            'required'      => false,
+                        ],
+                        [
+                            'name'          => 'fields',
+                            'description'   => 'Comma-delimited list of field names to retrieve for each record, \'*\' to return all fields.',
+                            'allowMultiple' => true,
+                            'type'          => 'string',
+                            'paramType'     => 'query',
+                            'required'      => false,
+                        ],
+                        [
+                            'name'          => 'include_count',
+                            'description'   => 'Include the total number of view results as meta data.',
+                            'allowMultiple' => false,
+                            'type'          => 'boolean',
+                            'paramType'     => 'query',
+                            'required'      => false,
+                        ],
+                        [
+                            'name'          => 'id_field',
+                            'description'   =>
+                                'Single or comma-delimited list of the fields used as identifiers for the table, ' .
+                                'used to override defaults or provide identifiers when none are provisioned.',
+                            'allowMultiple' => true,
+                            'type'          => 'string',
+                            'paramType'     => 'query',
+                            'required'      => false,
+                        ],
+                        [
+                            'name'          => 'id_type',
+                            'description'   =>
+                                'Single or comma-delimited list of the field types used as identifiers for the table, ' .
+                                'used to override defaults or provide identifiers when none are provisioned.',
+                            'allowMultiple' => true,
+                            'type'          => 'string',
+                            'paramType'     => 'query',
+                            'required'      => false,
+                        ],
+                        [
+                            'name'          => 'continue',
+                            'description'   =>
+                                'In batch scenarios, where supported, continue processing even after one record fails. ' .
+                                'Default behavior is to halt and return results up to the first point of failure.',
+                            'allowMultiple' => false,
+                            'type'          => 'boolean',
+                            'paramType'     => 'query',
+                            'required'      => false,
+                        ],
+                    ]
+                ),
+                'responseMessages' => $_commonResponses,
+            ],
+            [
+                'method'           => 'POST',
+                'summary'          => 'createRecords() - Create one or more records.',
+                'nickname'         => 'createRecords',
+                'notes'            =>
+                    'Posted data should be an array of records wrapped in a <b>record</b> element.<br/> ' .
+                    'By default, only the id property of the record is returned on success. ' .
+                    'Use <b>fields</b> parameter to return more info.',
+                'type'             => 'RecordsResponse',
+                'event_name'       => [ '{api_name}.{table_name}.insert', '{api_name}.table_inserted', ],
+                'parameters'       => array_merge(
+                    [
+                        [
+                            'name'          => 'table_name',
+                            'description'   => 'Name of the table to perform operations on.',
+                            'allowMultiple' => false,
+                            'type'          => 'string',
+                            'paramType'     => 'path',
+                            'required'      => true,
+                        ],
+                        [
+                            'name'          => 'body',
+                            'description'   => 'Data containing name-value pairs of records to create.',
+                            'allowMultiple' => false,
+                            'type'          => 'RecordsRequest',
+                            'paramType'     => 'body',
+                            'required'      => true,
+                        ],
+                        [
+                            'name'          => 'fields',
+                            'description'   => 'Comma-delimited list of field names to retrieve for each record, \'*\' to return all fields.',
+                            'allowMultiple' => true,
+                            'type'          => 'string',
+                            'paramType'     => 'query',
+                            'required'      => false,
+                        ],
+                        [
+                            'name'          => 'id_field',
+                            'description'   =>
+                                'Single or comma-delimited list of the fields used as identifiers for the table, ' .
+                                'used to override defaults or provide identifiers when none are provisioned.',
+                            'allowMultiple' => true,
+                            'type'          => 'string',
+                            'paramType'     => 'query',
+                            'required'      => false,
+                        ],
+                        [
+                            'name'          => 'id_type',
+                            'description'   =>
+                                'Single or comma-delimited list of the field types used as identifiers for the table, ' .
+                                'used to override defaults or provide identifiers when none are provisioned.',
+                            'allowMultiple' => true,
+                            'type'          => 'string',
+                            'paramType'     => 'query',
+                            'required'      => false,
+                        ],
+                        [
+                            'name'          => 'continue',
+                            'description'   =>
+                                'In batch scenarios, where supported, continue processing even after one record fails. ' .
+                                'Default behavior is to halt and return results up to the first point of failure.',
+                            'allowMultiple' => false,
+                            'type'          => 'boolean',
+                            'paramType'     => 'query',
+                            'required'      => false,
+                        ],
+                        [
+                            'name'          => 'rollback',
+                            'description'   =>
+                                'In batch scenarios, where supported, rollback all changes if any record of the batch fails. ' .
+                                'Default behavior is to halt and return results up to the first point of failure, leaving any changes.',
+                            'allowMultiple' => false,
+                            'type'          => 'boolean',
+                            'paramType'     => 'query',
+                            'required'      => false,
+                        ],
+                        [
+                            'name'          => 'X-HTTP-METHOD',
+                            'description'   => 'Override request using POST to tunnel other http request, such as DELETE.',
+                            'enum'          => [ 'GET', 'PUT', 'PATCH', 'DELETE' ],
+                            'allowMultiple' => false,
+                            'type'          => 'string',
+                            'paramType'     => 'header',
+                            'required'      => false,
+                        ],
+                    ]
+                ),
+                'responseMessages' => $_commonResponses,
+            ],
+            [
+                'method'           => 'PUT',
+                'summary'          => 'replaceRecordsByIds() - Update (replace) one or more records.',
+                'nickname'         => 'replaceRecordsByIds',
+                'notes'            =>
+                    'Posted body should be a single record with name-value pairs to update wrapped in a <b>record</b> tag.<br/> ' .
+                    'Ids can be included via URL parameter or included in the posted body.<br/> ' .
+                    'By default, only the id property of the record is returned on success. ' .
+                    'Use <b>fields</b> parameter to return more info.',
+                'type'             => 'RecordsResponse',
+                'event_name'       => [ '{api_name}.{table_name}.update', '{api_name}.table_updated', ],
+                'parameters'       => array_merge(
+                    [
+                        [
+                            'name'          => 'table_name',
+                            'description'   => 'Name of the table to perform operations on.',
+                            'allowMultiple' => false,
+                            'type'          => 'string',
+                            'paramType'     => 'path',
+                            'required'      => true,
+                        ],
+                        [
+                            'name'          => 'body',
+                            'description'   => 'Data containing name-value pairs of records to update.',
+                            'allowMultiple' => false,
+                            'type'          => 'RecordsRequest',
+                            'paramType'     => 'body',
+                            'required'      => true,
+                        ],
+                        [
+                            'name'          => 'ids',
+                            'description'   => 'Comma-delimited list of the identifiers of the resources to modify.',
+                            'allowMultiple' => true,
+                            'type'          => 'string',
+                            'paramType'     => 'query',
+                            'required'      => false,
+                        ],
+                        [
+                            'name'          => 'fields',
+                            'description'   => 'Comma-delimited list of field names to retrieve for each record, \'*\' to return all fields.',
+                            'allowMultiple' => true,
+                            'type'          => 'string',
+                            'paramType'     => 'query',
+                            'required'      => false,
+                        ],
+                        [
+                            'name'          => 'id_field',
+                            'description'   =>
+                                'Single or comma-delimited list of the fields used as identifiers for the table, ' .
+                                'used to override defaults or provide identifiers when none are provisioned.',
+                            'allowMultiple' => true,
+                            'type'          => 'string',
+                            'paramType'     => 'query',
+                            'required'      => false,
+                        ],
+                        [
+                            'name'          => 'id_type',
+                            'description'   =>
+                                'Single or comma-delimited list of the field types used as identifiers for the table, ' .
+                                'used to override defaults or provide identifiers when none are provisioned.',
+                            'allowMultiple' => true,
+                            'type'          => 'string',
+                            'paramType'     => 'query',
+                            'required'      => false,
+                        ],
+                        [
+                            'name'          => 'continue',
+                            'description'   =>
+                                'In batch scenarios, where supported, continue processing even after one record fails. ' .
+                                'Default behavior is to halt and return results up to the first point of failure.',
+                            'allowMultiple' => false,
+                            'type'          => 'boolean',
+                            'paramType'     => 'query',
+                            'required'      => false,
+                        ],
+                        [
+                            'name'          => 'rollback',
+                            'description'   =>
+                                'In batch scenarios, where supported, rollback all changes if any record of the batch fails. ' .
+                                'Default behavior is to halt and return results up to the first point of failure, leaving any changes.',
+                            'allowMultiple' => false,
+                            'type'          => 'boolean',
+                            'paramType'     => 'query',
+                            'required'      => false,
+                        ],
+                    ]
+                ),
+                'responseMessages' => $_commonResponses,
+            ],
+            [
+                'method'           => 'PUT',
+                'summary'          => 'replaceRecords() - Update (replace) one or more records.',
+                'nickname'         => 'replaceRecords',
+                'notes'            =>
+                    'Post data should be an array of records wrapped in a <b>record</b> tag.<br/> ' .
+                    'By default, only the id property of the record is returned on success. ' .
+                    'Use <b>fields</b> parameter to return more info.',
+                'type'             => 'RecordsResponse',
+                'event_name'       => [ '{api_name}.{table_name}.update', '{api_name}.table_updated', ],
+                'parameters'       => array_merge(
+                    [
+                        [
+                            'name'          => 'table_name',
+                            'description'   => 'Name of the table to perform operations on.',
+                            'allowMultiple' => false,
+                            'type'          => 'string',
+                            'paramType'     => 'path',
+                            'required'      => true,
+                        ],
+                        [
+                            'name'          => 'body',
+                            'description'   => 'Data containing name-value pairs of records to update.',
+                            'allowMultiple' => false,
+                            'type'          => 'RecordsRequest',
+                            'paramType'     => 'body',
+                            'required'      => true,
+                        ],
+                        [
+                            'name'          => 'fields',
+                            'description'   => 'Comma-delimited list of field names to retrieve for each record, \'*\' to return all fields.',
+                            'allowMultiple' => true,
+                            'type'          => 'string',
+                            'paramType'     => 'query',
+                            'required'      => false,
+                        ],
+                        [
+                            'name'          => 'id_field',
+                            'description'   =>
+                                'Single or comma-delimited list of the fields used as identifiers for the table, ' .
+                                'used to override defaults or provide identifiers when none are provisioned.',
+                            'allowMultiple' => true,
+                            'type'          => 'string',
+                            'paramType'     => 'query',
+                            'required'      => false,
+                        ],
+                        [
+                            'name'          => 'id_type',
+                            'description'   =>
+                                'Single or comma-delimited list of the field types used as identifiers for the table, ' .
+                                'used to override defaults or provide identifiers when none are provisioned.',
+                            'allowMultiple' => true,
+                            'type'          => 'string',
+                            'paramType'     => 'query',
+                            'required'      => false,
+                        ],
+                        [
+                            'name'          => 'continue',
+                            'description'   =>
+                                'In batch scenarios, where supported, continue processing even after one record fails. ' .
+                                'Default behavior is to halt and return results up to the first point of failure.',
+                            'allowMultiple' => false,
+                            'type'          => 'boolean',
+                            'paramType'     => 'query',
+                            'required'      => false,
+                        ],
+                        [
+                            'name'          => 'rollback',
+                            'description'   =>
+                                'In batch scenarios, where supported, rollback all changes if any record of the batch fails. ' .
+                                'Default behavior is to halt and return results up to the first point of failure, leaving any changes.',
+                            'allowMultiple' => false,
+                            'type'          => 'boolean',
+                            'paramType'     => 'query',
+                            'required'      => false,
+                        ],
+                    ]
+                ),
+                'responseMessages' => $_commonResponses,
+            ],
+            [
+                'method'           => 'PATCH',
+                'summary'          => 'updateRecordsByIds() - Update (patch) one or more records.',
+                'nickname'         => 'updateRecordsByIds',
+                'notes'            =>
+                    'Posted body should be a single record with name-value pairs to update wrapped in a <b>record</b> tag.<br/> ' .
+                    'Ids can be included via URL parameter or included in the posted body.<br/> ' .
+                    'By default, only the id property of the record is returned on success. ' .
+                    'Use <b>fields</b> parameter to return more info.',
+                'type'             => 'RecordsResponse',
+                'event_name'       => [ '{api_name}.{table_name}.update', '{api_name}.table_updated', ],
+                'parameters'       => array_merge(
+                    [
+                        [
+                            'name'          => 'table_name',
+                            'description'   => 'Name of the table to perform operations on.',
+                            'allowMultiple' => false,
+                            'type'          => 'string',
+                            'paramType'     => 'path',
+                            'required'      => true,
+                        ],
+                        [
+                            'name'          => 'body',
+                            'description'   => 'A single record containing name-value pairs of fields to update.',
+                            'allowMultiple' => false,
+                            'type'          => 'RecordsRequest',
+                            'paramType'     => 'body',
+                            'required'      => true,
+                        ],
+                        [
+                            'name'          => 'ids',
+                            'description'   => 'Comma-delimited list of the identifiers of the resources to modify.',
+                            'allowMultiple' => true,
+                            'type'          => 'string',
+                            'paramType'     => 'query',
+                            'required'      => false,
+                        ],
+                        [
+                            'name'          => 'fields',
+                            'description'   => 'Comma-delimited list of field names to retrieve for each record, \'*\' to return all fields.',
+                            'allowMultiple' => true,
+                            'type'          => 'string',
+                            'paramType'     => 'query',
+                            'required'      => false,
+                        ],
+                        [
+                            'name'          => 'id_field',
+                            'description'   =>
+                                'Single or comma-delimited list of the fields used as identifiers for the table, ' .
+                                'used to override defaults or provide identifiers when none are provisioned.',
+                            'allowMultiple' => true,
+                            'type'          => 'string',
+                            'paramType'     => 'query',
+                            'required'      => false,
+                        ],
+                        [
+                            'name'          => 'id_type',
+                            'description'   =>
+                                'Single or comma-delimited list of the field types used as identifiers for the table, ' .
+                                'used to override defaults or provide identifiers when none are provisioned.',
+                            'allowMultiple' => true,
+                            'type'          => 'string',
+                            'paramType'     => 'query',
+                            'required'      => false,
+                        ],
+                        [
+                            'name'          => 'continue',
+                            'description'   =>
+                                'In batch scenarios, where supported, continue processing even after one record fails. ' .
+                                'Default behavior is to halt and return results up to the first point of failure.',
+                            'allowMultiple' => false,
+                            'type'          => 'boolean',
+                            'paramType'     => 'query',
+                            'required'      => false,
+                        ],
+                        [
+                            'name'          => 'rollback',
+                            'description'   =>
+                                'In batch scenarios, where supported, rollback all changes if any record of the batch fails. ' .
+                                'Default behavior is to halt and return results up to the first point of failure, leaving any changes.',
+                            'allowMultiple' => false,
+                            'type'          => 'boolean',
+                            'paramType'     => 'query',
+                            'required'      => false,
+                        ],
+                    ]
+                ),
+                'responseMessages' => $_commonResponses,
+            ],
+            [
+                'method'           => 'PATCH',
+                'summary'          => 'updateRecords() - Update (patch) one or more records.',
+                'nickname'         => 'updateRecords',
+                'notes'            =>
+                    'Post data should be an array of records containing at least the identifying fields for each record.<br/> ' .
+                    'By default, only the id property of the record is returned on success. ' .
+                    'Use <b>fields</b> parameter to return more info.',
+                'type'             => 'RecordsResponse',
+                'event_name'       => [ '{api_name}.{table_name}.update', '{api_name}.table_updated', ],
+                'parameters'       => array_merge(
+                    [
+                        [
+                            'name'          => 'table_name',
+                            'description'   => 'Name of the table to perform operations on.',
+                            'allowMultiple' => false,
+                            'type'          => 'string',
+                            'paramType'     => 'path',
+                            'required'      => true,
+                        ],
+                        [
+                            'name'          => 'body',
+                            'description'   => 'Data containing name-value pairs of records to update.',
+                            'allowMultiple' => false,
+                            'type'          => 'RecordsRequest',
+                            'paramType'     => 'body',
+                            'required'      => true,
+                        ],
+                        [
+                            'name'          => 'fields',
+                            'description'   => 'Comma-delimited list of field names to retrieve for each record, \'*\' to return all fields.',
+                            'allowMultiple' => true,
+                            'type'          => 'string',
+                            'paramType'     => 'query',
+                            'required'      => false,
+                        ],
+                        [
+                            'name'          => 'id_field',
+                            'description'   =>
+                                'Single or comma-delimited list of the fields used as identifiers for the table, ' .
+                                'used to override defaults or provide identifiers when none are provisioned.',
+                            'allowMultiple' => true,
+                            'type'          => 'string',
+                            'paramType'     => 'query',
+                            'required'      => false,
+                        ],
+                        [
+                            'name'          => 'id_type',
+                            'description'   =>
+                                'Single or comma-delimited list of the field types used as identifiers for the table, ' .
+                                'used to override defaults or provide identifiers when none are provisioned.',
+                            'allowMultiple' => true,
+                            'type'          => 'string',
+                            'paramType'     => 'query',
+                            'required'      => false,
+                        ],
+                        [
+                            'name'          => 'continue',
+                            'description'   =>
+                                'In batch scenarios, where supported, continue processing even after one record fails. ' .
+                                'Default behavior is to halt and return results up to the first point of failure.',
+                            'allowMultiple' => false,
+                            'type'          => 'boolean',
+                            'paramType'     => 'query',
+                            'required'      => false,
+                        ],
+                        [
+                            'name'          => 'rollback',
+                            'description'   =>
+                                'In batch scenarios, where supported, rollback all changes if any record of the batch fails. ' .
+                                'Default behavior is to halt and return results up to the first point of failure, leaving any changes.',
+                            'allowMultiple' => false,
+                            'type'          => 'boolean',
+                            'paramType'     => 'query',
+                            'required'      => false,
+                        ],
+                    ]
+                ),
+                'responseMessages' => $_commonResponses,
+            ],
+            [
+                'method'           => 'DELETE',
+                'summary'          => 'deleteRecordsByIds() - Delete one or more records.',
+                'nickname'         => 'deleteRecordsByIds',
+                'notes'            =>
+                    'Use <b>ids</b> to delete specific records.<br/> ' .
+                    'Alternatively, to delete by records, or a large list of ids, ' .
+                    'use the POST request with X-HTTP-METHOD = DELETE header.<br/> ' .
+                    'By default, only the id property of the record is returned on success, use <b>fields</b> to return more info. ',
+                'type'             => 'RecordsResponse',
+                'event_name'       => [ '{api_name}.{table_name}.delete', '{api_name}.table_deleted', ],
+                'parameters'       => array_merge(
+                    [
+                        [
+                            'name'          => 'table_name',
+                            'description'   => 'Name of the table to perform operations on.',
+                            'allowMultiple' => false,
+                            'type'          => 'string',
+                            'paramType'     => 'path',
+                            'required'      => true,
+                        ],
+                        [
+                            'name'          => 'ids',
+                            'description'   => 'Comma-delimited list of the identifiers of the resources to delete.',
+                            'allowMultiple' => true,
+                            'type'          => 'string',
+                            'paramType'     => 'query',
+                            'required'      => true,
+                        ],
+                        [
+                            'name'          => 'fields',
+                            'description'   => 'Comma-delimited list of field names to retrieve for each record, \'*\' to return all fields.',
+                            'allowMultiple' => true,
+                            'type'          => 'string',
+                            'paramType'     => 'query',
+                            'required'      => false,
+                        ],
+                        [
+                            'name'          => 'id_field',
+                            'description'   =>
+                                'Single or comma-delimited list of the fields used as identifiers for the table, ' .
+                                'used to override defaults or provide identifiers when none are provisioned.',
+                            'allowMultiple' => true,
+                            'type'          => 'string',
+                            'paramType'     => 'query',
+                            'required'      => false,
+                        ],
+                        [
+                            'name'          => 'id_type',
+                            'description'   =>
+                                'Single or comma-delimited list of the field types used as identifiers for the table, ' .
+                                'used to override defaults or provide identifiers when none are provisioned.',
+                            'allowMultiple' => true,
+                            'type'          => 'string',
+                            'paramType'     => 'query',
+                            'required'      => false,
+                        ],
+                        [
+                            'name'          => 'continue',
+                            'description'   =>
+                                'In batch scenarios, where supported, continue processing even after one record fails. ' .
+                                'Default behavior is to halt and return results up to the first point of failure.',
+                            'allowMultiple' => false,
+                            'type'          => 'boolean',
+                            'paramType'     => 'query',
+                            'required'      => false,
+                        ],
+                        [
+                            'name'          => 'rollback',
+                            'description'   =>
+                                'In batch scenarios, where supported, rollback all changes if any record of the batch fails. ' .
+                                'Default behavior is to halt and return results up to the first point of failure, leaving any changes.',
+                            'allowMultiple' => false,
+                            'type'          => 'boolean',
+                            'paramType'     => 'query',
+                            'required'      => false,
+                        ],
+                    ]
+                ),
+                'responseMessages' => $_commonResponses,
+            ],
+            [
+                'method'           => 'DELETE',
+                'summary'          => 'deleteRecords() - Delete one or more records.',
+                'nickname'         => 'deleteRecords',
+                'notes'            =>
+                    'Use <b>ids</b> to delete specific records, otherwise set <b>force</b> to true to clear the table.<br/> ' .
+                    'Alternatively, to delete by records, or a large list of ids, ' .
+                    'use the POST request with X-HTTP-METHOD = DELETE header.<br/> ' .
+                    'By default, only the id property of the record is returned on success, use <b>fields</b> to return more info. ',
+                'type'             => 'RecordsResponse',
+                'event_name'       => [ '{api_name}.{table_name}.delete', '{api_name}.table_deleted', ],
+                'parameters'       => array_merge(
+                    [
+                        [
+                            'name'          => 'table_name',
+                            'description'   => 'Name of the table to perform operations on.',
+                            'allowMultiple' => false,
+                            'type'          => 'string',
+                            'paramType'     => 'path',
+                            'required'      => true,
+                        ],
+                        [
+                            'name'          => 'body',
+                            'description'   => 'Data containing name-value pairs of records to update.',
+                            'allowMultiple' => false,
+                            'type'          => 'RecordsRequest',
+                            'paramType'     => 'body',
+                            'required'      => true,
+                        ],
+                        [
+                            'name'          => 'force',
+                            'description'   => 'Set force to true to delete all records in this table, otherwise <b>ids</b> parameter is required.',
+                            'allowMultiple' => false,
+                            'type'          => 'boolean',
+                            'paramType'     => 'query',
+                            'required'      => false,
+                            'default'       => false,
+                        ],
+                        [
+                            'name'          => 'fields',
+                            'description'   => 'Comma-delimited list of field names to retrieve for each record, \'*\' to return all fields.',
+                            'allowMultiple' => true,
+                            'type'          => 'string',
+                            'paramType'     => 'query',
+                            'required'      => false,
+                        ],
+                        [
+                            'name'          => 'id_field',
+                            'description'   =>
+                                'Single or comma-delimited list of the fields used as identifiers for the table, ' .
+                                'used to override defaults or provide identifiers when none are provisioned.',
+                            'allowMultiple' => true,
+                            'type'          => 'string',
+                            'paramType'     => 'query',
+                            'required'      => false,
+                        ],
+                        [
+                            'name'          => 'id_type',
+                            'description'   =>
+                                'Single or comma-delimited list of the field types used as identifiers for the table, ' .
+                                'used to override defaults or provide identifiers when none are provisioned.',
+                            'allowMultiple' => true,
+                            'type'          => 'string',
+                            'paramType'     => 'query',
+                            'required'      => false,
+                        ],
+                        [
+                            'name'          => 'continue',
+                            'description'   =>
+                                'In batch scenarios, where supported, continue processing even after one record fails. ' .
+                                'Default behavior is to halt and return results up to the first point of failure.',
+                            'allowMultiple' => false,
+                            'type'          => 'boolean',
+                            'paramType'     => 'query',
+                            'required'      => false,
+                        ],
+                        [
+                            'name'          => 'rollback',
+                            'description'   =>
+                                'In batch scenarios, where supported, rollback all changes if any record of the batch fails. ' .
+                                'Default behavior is to halt and return results up to the first point of failure, leaving any changes.',
+                            'allowMultiple' => false,
+                            'type'          => 'boolean',
+                            'paramType'     => 'query',
+                            'required'      => false,
+                        ],
+                    ]
+                ),
+                'responseMessages' => $_commonResponses,
+            ],
+        ];
     }
 }
