@@ -87,13 +87,13 @@ class Table extends BaseDbTableResource
     /**
      * {@inheritdoc}
      */
-    public function listResources( $include_properties = null )
+    public function listResources( $fields = null )
     {
 //        $refresh = $this->request->queryBool('refresh');
 
         $_names = $this->service->getConnection()->listDatabases();
 
-        if ( empty( $include_properties ) )
+        if ( empty( $fields ) )
         {
             return [ 'resource' => $_names ];
         }
@@ -128,7 +128,7 @@ class Table extends BaseDbTableResource
             $_tables[] = [ 'name' => $name, 'label' => $label, 'plural' => $plural ];
         }
 
-        return $this->makeResourceList( $_tables, $include_properties, true );
+        return $this->makeResourceList($_tables, 'name', $fields, 'resource');
     }
 
     /**
