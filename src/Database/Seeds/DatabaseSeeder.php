@@ -17,19 +17,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-namespace DreamFactory\Rave\CouchDb\Database\Seeds;
+namespace DreamFactory\Core\CouchDb\Database\Seeds;
 
-use DreamFactory\Rave\Database\Seeds\BaseModelSeeder;
+use DreamFactory\Core\Database\Seeds\BaseModelSeeder;
 
 class DatabaseSeeder extends BaseModelSeeder
 {
-    protected $modelClass = 'DreamFactory\\Rave\\Models\\ServiceType';
+    protected $modelClass = 'DreamFactory\\Core\\Models\\ServiceType';
 
     protected $records = [
         [
             'name'           => 'couch_db',
-            'class_name'     => 'DreamFactory\\Rave\\CouchDb\\Services\\CouchDb',
-            'config_handler' => 'DreamFactory\\Rave\\CouchDb\\Models\\CouchDbConfig',
+            'class_name'     => 'DreamFactory\\Core\\CouchDb\\Services\\CouchDb',
+            'config_handler' => 'DreamFactory\\Core\\CouchDb\\Models\\CouchDbConfig',
             'label'          => 'CouchDB',
             'description'    => 'Database service for CouchDB connections.',
             'group'          => 'Databases',

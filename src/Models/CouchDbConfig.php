@@ -1,8 +1,8 @@
 <?php
 /**
- * This file is part of the DreamFactory Rave(tm)
+ * This file is part of the DreamFactory(tm)
  *
- * DreamFactory Rave(tm) <http://github.com/dreamfactorysoftware/rave>
+ * DreamFactory(tm) <http://github.com/dreamfactorysoftware/rave>
  * Copyright 2012-2014 DreamFactory Software, Inc. <support@dreamfactory.com>
  *
  * Licensed under the Apache License, Version 2.0 (the 'License');
@@ -18,11 +18,11 @@
  * limitations under the License.
  */
 
-namespace DreamFactory\Rave\CouchDb\Models;
+namespace DreamFactory\Core\CouchDb\Models;
 
 use DreamFactory\Library\Utility\ArrayUtils;
-use DreamFactory\Rave\Exceptions\BadRequestException;
-use DreamFactory\Rave\Models\BaseServiceConfigModel;
+use DreamFactory\Core\Exceptions\BadRequestException;
+use DreamFactory\Core\Models\BaseServiceConfigModel;
 use Illuminate\Database\Query\Builder;
 
 /**
@@ -40,6 +40,8 @@ class CouchDbConfig extends BaseServiceConfigModel
     protected $table = 'couch_db_config';
 
     protected $fillable = [ 'service_id', 'dsn', 'options', 'driver_options' ];
+
+    protected $casts = [ 'options' => 'array', 'driver_options' => 'array' ];
 
     public static function validateConfig( $config )
     {
