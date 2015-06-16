@@ -1,23 +1,4 @@
 <?php
-/**
- * This file is part of the DreamFactory(tm)
- *
- * DreamFactory(tm) <http://github.com/dreamfactorysoftware/rave>
- * Copyright 2012-2014 DreamFactory Software, Inc. <support@dreamfactory.com>
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
 namespace DreamFactory\Core\CouchDb\Services;
 
 use DreamFactory\Library\Utility\ArrayUtils;
@@ -55,12 +36,12 @@ class CouchDb extends BaseNoSqlDbService
      * @var array
      */
     protected $resources = [
-        Schema::RESOURCE_NAME          => [
+        Schema::RESOURCE_NAME => [
             'name'       => Schema::RESOURCE_NAME,
             'class_name' => 'DreamFactory\\Core\\CouchDb\\Resources\\Schema',
             'label'      => 'Schema',
         ],
-        Table::RESOURCE_NAME           => [
+        Table::RESOURCE_NAME  => [
             'name'       => Table::RESOURCE_NAME,
             'class_name' => 'DreamFactory\\Core\\CouchDb\\Resources\\Table',
             'label'      => 'Table',
@@ -79,64 +60,53 @@ class CouchDb extends BaseNoSqlDbService
      * @throws \InvalidArgumentException
      * @throws \Exception
      */
-    public function __construct( $settings = array() )
+    public function __construct($settings = array())
     {
-        parent::__construct( $settings );
+        parent::__construct($settings);
 
-        $config = ArrayUtils::clean( ArrayUtils::get( $settings, 'config' ) );
+        $config = ArrayUtils::clean(ArrayUtils::get($settings, 'config'));
 //        Session::replaceLookups( $config, true );
 
-        $dsn = strval( ArrayUtils::get( $config, 'dsn' ) );
-        if ( empty( $dsn ) )
-        {
+        $dsn = strval(ArrayUtils::get($config, 'dsn'));
+        if (empty($dsn)) {
             $dsn = 'http://localhost:5984';
         }
 
-        $options = ArrayUtils::get( $config, 'options', array() );
-        if(empty($options))
-        {
+        $options = ArrayUtils::get($config, 'options', array());
+        if (empty($options)) {
             $options = array();
         }
-        $user = ArrayUtils::get( $config, 'username' );
-        $password = ArrayUtils::get( $config, 'password' );
+        $user = ArrayUtils::get($config, 'username');
+        $password = ArrayUtils::get($config, 'password');
 
         // support old configuration options of user, pwd, and db in credentials directly
-        if ( !isset( $options['username'] ) && isset( $user ) )
-        {
+        if (!isset($options['username']) && isset($user)) {
             $options['username'] = $user;
         }
-        if ( !isset( $options['password'] ) && isset($password) )
-        {
+        if (!isset($options['password']) && isset($password)) {
             $options['password'] = $password;
         }
-        if ( !isset( $options['db'] ) && ( null !== $db = ArrayUtils::get( $config, 'db', null, true ) ) )
-        {
+        if (!isset($options['db']) && (null !== $db = ArrayUtils::get($config, 'db', null, true))) {
             $options['db'] = $db;
         }
 
-        if ( !isset( $db ) && ( null === $db = ArrayUtils::get( $options, 'db', null, true ) ) )
-        {
+        if (!isset($db) && (null === $db = ArrayUtils::get($options, 'db', null, true))) {
             //  Attempt to find db in connection string
-            $db = strstr( substr( $dsn, static::DSN_PREFIX_LENGTH ), '/' );
-            if ( false !== $_pos = strpos( $db, '?' ) )
-            {
-                $db = substr( $db, 0, $_pos );
+            $db = strstr(substr($dsn, static::DSN_PREFIX_LENGTH), '/');
+            if (false !== $_pos = strpos($db, '?')) {
+                $db = substr($db, 0, $_pos);
             }
-            $db = trim( $db, '/' );
+            $db = trim($db, '/');
         }
 
-        if ( empty( $db ) )
-        {
-            throw new InternalServerErrorException( "No CouchDb database selected in configuration." );
+        if (empty($db)) {
+            throw new InternalServerErrorException("No CouchDb database selected in configuration.");
         }
 
-        try
-        {
-            $this->dbConn = @new \couchClient( $dsn, 'default' );
-        }
-        catch ( \Exception $_ex )
-        {
-            throw new InternalServerErrorException( "CouchDb Service Exception:\n{$_ex->getMessage()}" );
+        try {
+            $this->dbConn = @new \couchClient($dsn, 'default');
+        } catch (\Exception $_ex) {
+            throw new InternalServerErrorException("CouchDb Service Exception:\n{$_ex->getMessage()}");
         }
     }
 
@@ -145,13 +115,10 @@ class CouchDb extends BaseNoSqlDbService
      */
     public function __destruct()
     {
-        try
-        {
+        try {
             $this->dbConn = null;
-        }
-        catch ( \Exception $_ex )
-        {
-            error_log( "Failed to disconnect from database.\n{$_ex->getMessage()}" );
+        } catch (\Exception $_ex) {
+            error_log("Failed to disconnect from database.\n{$_ex->getMessage()}");
         }
     }
 
@@ -160,9 +127,8 @@ class CouchDb extends BaseNoSqlDbService
      */
     public function getConnection()
     {
-        if ( !isset( $this->dbConn ) )
-        {
-            throw new InternalServerErrorException( 'Database connection has not been initialized.' );
+        if (!isset($this->dbConn)) {
+            throw new InternalServerErrorException('Database connection has not been initialized.');
         }
 
         return $this->dbConn;
@@ -175,23 +141,20 @@ class CouchDb extends BaseNoSqlDbService
      * @throws BadRequestException
      * @throws NotFoundException
      */
-    public function correctTableName( &$name )
+    public function correctTableName(&$name)
     {
         static $_existing = null;
 
-        if ( !$_existing )
-        {
+        if (!$_existing) {
             $_existing = $this->dbConn->listDatabases();
         }
 
-        if ( empty( $name ) )
-        {
-            throw new BadRequestException( 'Table name can not be empty.' );
+        if (empty($name)) {
+            throw new BadRequestException('Table name can not be empty.');
         }
 
-        if ( false === array_search( $name, $_existing ) )
-        {
-            throw new NotFoundException( "Table '$name' not found." );
+        if (false === array_search($name, $_existing)) {
+            throw new NotFoundException("Table '$name' not found.");
         }
 
         return $name;
@@ -200,14 +163,11 @@ class CouchDb extends BaseNoSqlDbService
     /**
      * {@InheritDoc}
      */
-    protected function handleResource( array $resources )
+    protected function handleResource(array $resources)
     {
-        try
-        {
-            return parent::handleResource( $resources );
-        }
-        catch ( NotFoundException $_ex )
-        {
+        try {
+            return parent::handleResource($resources);
+        } catch (NotFoundException $_ex) {
             // If version 1.x, the resource could be a table
 //            if ($this->request->getApiVersion())
 //            {
@@ -236,61 +196,52 @@ class CouchDb extends BaseNoSqlDbService
     /**
      * {@inheritdoc}
      */
-    public function listResources( $fields = null )
+    public function listResources($fields = null)
     {
-        if ( !$this->request->getParameterAsBool( 'as_access_components' ) )
-        {
-            return parent::listResources( $fields );
+        if (!$this->request->getParameterAsBool('as_access_components')) {
+            return parent::listResources($fields);
         }
 
-        $_resources = [ ];
+        $_resources = [];
 
 //        $refresh = $this->request->queryBool( 'refresh' );
 
         $_name = Schema::RESOURCE_NAME . '/';
-        $_access = $this->getPermissions( $_name );
-        if ( !empty( $_access ) )
-        {
+        $_access = $this->getPermissions($_name);
+        if (!empty($_access)) {
             $_resources[] = $_name;
             $_resources[] = $_name . '*';
         }
 
         $_result = $this->dbConn->listDatabases();
-        foreach ( $_result as $_name )
-        {
-            if ( '_' != substr( $_name, 0, 1 ) )
-            {
+        foreach ($_result as $_name) {
+            if ('_' != substr($_name, 0, 1)) {
                 $_name = Schema::RESOURCE_NAME . '/' . $_name;
-                $_access = $this->getPermissions( $_name );
-                if ( !empty( $_access ) )
-                {
+                $_access = $this->getPermissions($_name);
+                if (!empty($_access)) {
                     $_resources[] = $_name;
                 }
             }
         }
 
         $_name = Table::RESOURCE_NAME . '/';
-        $_access = $this->getPermissions( $_name );
-        if ( !empty( $_access ) )
-        {
+        $_access = $this->getPermissions($_name);
+        if (!empty($_access)) {
             $_resources[] = $_name;
             $_resources[] = $_name . '*';
         }
 
-        foreach ( $_result as $_name )
-        {
-            if ( '_' != substr( $_name, 0, 1 ) )
-            {
+        foreach ($_result as $_name) {
+            if ('_' != substr($_name, 0, 1)) {
                 $_name = Table::RESOURCE_NAME . '/' . $_name;
-                $_access = $this->getPermissions( $_name );
-                if ( !empty( $_access ) )
-                {
+                $_access = $this->getPermissions($_name);
+                if (!empty($_access)) {
                     $_resources[] = $_name;
                 }
             }
         }
 
-        return [ 'resource' => $_resources ];
+        return ['resource' => $_resources];
     }
 
     /**
