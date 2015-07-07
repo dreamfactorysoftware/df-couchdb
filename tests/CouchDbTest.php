@@ -37,7 +37,7 @@ class CouchDbTest extends \DreamFactory\Core\Testing\DbServiceTestCase
                 'name'        => static::SERVICE_NAME,
                 'label'       => 'CouchDB Database',
                 'description' => 'CouchDB database for testing',
-                'is_active'   => 1,
+                'is_active'   => true,
                 'type'        => 'couch_db',
                 'config'      => ['dsn' => env('COUCHDB_DSN'), 'options' => $options]
             ]
