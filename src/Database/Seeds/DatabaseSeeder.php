@@ -17,7 +17,7 @@ class DatabaseSeeder extends BaseModelSeeder
             'config_handler' => CouchDbConfig::class,
             'label'          => 'CouchDB',
             'description'    => 'Database service for CouchDB connections.',
-            'group'          => 'Databases',
+            'group'          => 'Database',
             'singleton'      => false,
         ]
     ];
