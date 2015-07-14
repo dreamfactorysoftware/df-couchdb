@@ -42,7 +42,7 @@ class Schema extends BaseNoSqlDbSchemaResource
         $_names = $this->service->getConnection()->listDatabases();
 
         if (empty($fields)) {
-            return ['resource' => $_names];
+            return $this->cleanResources($_names);
         }
 
         $_extras =
@@ -73,7 +73,7 @@ class Schema extends BaseNoSqlDbSchemaResource
             }
         }
 
-        return $this->makeResourceList($_tables, 'name', $fields, 'resource');
+        return $this->cleanResources($_tables, 'name', $fields);
     }
 
     /**
