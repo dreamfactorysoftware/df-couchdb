@@ -71,9 +71,9 @@ class CouchDb extends BaseNoSqlDbService
             $dsn = 'http://localhost:5984';
         }
 
-        $options = ArrayUtils::get($config, 'options', array());
+        $options = ArrayUtils::get($config, 'options', []);
         if (empty($options)) {
-            $options = array();
+            $options = [];
         }
         $user = ArrayUtils::get($config, 'username');
         $password = ArrayUtils::get($config, 'password');
@@ -183,64 +183,56 @@ class CouchDb extends BaseNoSqlDbService
     }
 
     /**
-     * @return array
-     */
-    protected function getResources()
-    {
-        return $this->resources;
-    }
-
-    // REST service implementation
-
-    /**
      * {@inheritdoc}
      */
-    public function listResources($fields = null)
+    public function getResources($only_handlers = false)
     {
-        if (!$this->request->getParameterAsBool('as_access_components')) {
-            return parent::listResources($fields);
-        }
-
-        $_resources = [];
+        if (!$only_handlers) {
+            if ($this->request->getParameterAsBool('as_access_components')) {
+                $_resources = [];
 
 //        $refresh = $this->request->queryBool( 'refresh' );
 
-        $_name = Schema::RESOURCE_NAME . '/';
-        $_access = $this->getPermissions($_name);
-        if (!empty($_access)) {
-            $_resources[] = $_name;
-            $_resources[] = $_name . '*';
-        }
-
-        $_result = $this->dbConn->listDatabases();
-        foreach ($_result as $_name) {
-            if ('_' != substr($_name, 0, 1)) {
-                $_name = Schema::RESOURCE_NAME . '/' . $_name;
+                $_name = Schema::RESOURCE_NAME . '/';
                 $_access = $this->getPermissions($_name);
                 if (!empty($_access)) {
                     $_resources[] = $_name;
+                    $_resources[] = $_name . '*';
                 }
-            }
-        }
 
-        $_name = Table::RESOURCE_NAME . '/';
-        $_access = $this->getPermissions($_name);
-        if (!empty($_access)) {
-            $_resources[] = $_name;
-            $_resources[] = $_name . '*';
-        }
+                $_result = $this->dbConn->listDatabases();
+                foreach ($_result as $_name) {
+                    if ('_' != substr($_name, 0, 1)) {
+                        $_name = Schema::RESOURCE_NAME . '/' . $_name;
+                        $_access = $this->getPermissions($_name);
+                        if (!empty($_access)) {
+                            $_resources[] = $_name;
+                        }
+                    }
+                }
 
-        foreach ($_result as $_name) {
-            if ('_' != substr($_name, 0, 1)) {
-                $_name = Table::RESOURCE_NAME . '/' . $_name;
+                $_name = Table::RESOURCE_NAME . '/';
                 $_access = $this->getPermissions($_name);
                 if (!empty($_access)) {
                     $_resources[] = $_name;
+                    $_resources[] = $_name . '*';
                 }
+
+                foreach ($_result as $_name) {
+                    if ('_' != substr($_name, 0, 1)) {
+                        $_name = Table::RESOURCE_NAME . '/' . $_name;
+                        $_access = $this->getPermissions($_name);
+                        if (!empty($_access)) {
+                            $_resources[] = $_name;
+                        }
+                    }
+                }
+
+                return $_resources;
             }
         }
 
-        return $this->cleanResources($_resources);
+        return $this->resources;
     }
 
     /**

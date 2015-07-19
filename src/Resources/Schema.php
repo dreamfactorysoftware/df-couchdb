@@ -35,15 +35,14 @@ class Schema extends BaseNoSqlDbSchemaResource
     /**
      * {@inheritdoc}
      */
-    public function listResources($fields = null)
+    public function getResources($only_handlers = false)
     {
+        if ($only_handlers) {
+            return [];
+        }
 //        $refresh = $this->request->queryBool('refresh');
 
         $_names = $this->service->getConnection()->listDatabases();
-
-        if (empty($fields)) {
-            return $this->cleanResources($_names);
-        }
 
         $_extras =
             DbUtilities::getSchemaExtrasForTables($this->service->getServiceId(), $_names, false, 'table,label,plural');
@@ -73,7 +72,7 @@ class Schema extends BaseNoSqlDbSchemaResource
             }
         }
 
-        return $this->cleanResources($_tables, 'name', $fields);
+        return $_tables;
     }
 
     /**
