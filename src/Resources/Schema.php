@@ -42,17 +42,17 @@ class Schema extends BaseNoSqlDbSchemaResource
         }
 //        $refresh = $this->request->queryBool('refresh');
 
-        $_names = $this->service->getConnection()->listDatabases();
+        $names = $this->service->getConnection()->listDatabases();
 
-        $_extras =
-            DbUtilities::getSchemaExtrasForTables($this->service->getServiceId(), $_names, false, 'table,label,plural');
+        $extras =
+            DbUtilities::getSchemaExtrasForTables($this->service->getServiceId(), $names, false, 'table,label,plural');
 
-        $_tables = [];
-        foreach ($_names as $name) {
+        $tables = [];
+        foreach ($names as $name) {
             if ('_' != substr($name, 0, 1)) {
                 $label = '';
                 $plural = '';
-                foreach ($_extras as $each) {
+                foreach ($extras as $each) {
                     if (0 == strcasecmp($name, ArrayUtils::get($each, 'table', ''))) {
                         $label = ArrayUtils::get($each, 'label');
                         $plural = ArrayUtils::get($each, 'plural');
@@ -68,11 +68,11 @@ class Schema extends BaseNoSqlDbSchemaResource
                     $plural = Inflector::pluralize($label);
                 }
 
-                $_tables[] = ['name' => $name, 'label' => $label, 'plural' => $plural];
+                $tables[] = ['name' => $name, 'label' => $label, 'plural' => $plural];
             }
         }
 
-        return $_tables;
+        return $tables;
     }
 
     /**
@@ -80,18 +80,18 @@ class Schema extends BaseNoSqlDbSchemaResource
      */
     public function describeTable($table, $refresh = true)
     {
-        $_name = (is_array($table)) ? ArrayUtils::get($table, 'name') : $table;
+        $name = (is_array($table)) ? ArrayUtils::get($table, 'name') : $table;
 
         try {
-            $this->service->getConnection()->useDatabase($_name);
-            $_out = $this->service->getConnection()->asArray()->getDatabaseInfos();
-            $_out['name'] = $_name;
-            $_out['access'] = $this->getPermissions($_name);
+            $this->service->getConnection()->useDatabase($name);
+            $out = $this->service->getConnection()->asArray()->getDatabaseInfos();
+            $out['name'] = $name;
+            $out['access'] = $this->getPermissions($name);
 
-            return $_out;
-        } catch (\Exception $_ex) {
+            return $out;
+        } catch (\Exception $ex) {
             throw new InternalServerErrorException(
-                "Failed to get table properties for table '$_name'.\n{$_ex->getMessage()}"
+                "Failed to get table properties for table '$name'.\n{$ex->getMessage()}"
             );
         }
     }
@@ -108,13 +108,13 @@ class Schema extends BaseNoSqlDbSchemaResource
         try {
             $this->service->getConnection()->useDatabase($table);
             $this->service->getConnection()->asArray()->createDatabase();
-            // $_result['ok'] = true
+            // $result['ok'] = true
 
-            $_out = array('name' => $table);
+            $out = array('name' => $table);
 
-            return $_out;
-        } catch (\Exception $_ex) {
-            throw new InternalServerErrorException("Failed to create table '$table'.\n{$_ex->getMessage()}");
+            return $out;
+        } catch (\Exception $ex) {
+            throw new InternalServerErrorException("Failed to create table '$table'.\n{$ex->getMessage()}");
         }
     }
 
@@ -129,7 +129,7 @@ class Schema extends BaseNoSqlDbSchemaResource
 
         $this->service->getConnection()->useDatabase($table);
 
-//		throw new InternalServerErrorException( "Failed to update table '$_name'." );
+//		throw new InternalServerErrorException( "Failed to update table '$name'." );
         return array('name' => $table);
     }
 
@@ -138,20 +138,20 @@ class Schema extends BaseNoSqlDbSchemaResource
      */
     public function deleteTable($table, $check_empty = false)
     {
-        $_name = (is_array($table)) ? ArrayUtils::get($table, 'name') : $table;
-        if (empty($_name)) {
+        $name = (is_array($table)) ? ArrayUtils::get($table, 'name') : $table;
+        if (empty($name)) {
             throw new BadRequestException('Table name can not be empty.');
         }
 
         try {
-            $this->service->getConnection()->useDatabase($_name);
+            $this->service->getConnection()->useDatabase($name);
             $this->service->getConnection()->asArray()->deleteDatabase();
 
-            // $_result['ok'] = true
+            // $result['ok'] = true
 
-            return array('name' => $_name);
-        } catch (\Exception $_ex) {
-            throw new InternalServerErrorException("Failed to delete table '$_name'.\n{$_ex->getMessage()}");
+            return array('name' => $name);
+        } catch (\Exception $ex) {
+            throw new InternalServerErrorException("Failed to delete table '$name'.\n{$ex->getMessage()}");
         }
     }
 }

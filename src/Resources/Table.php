@@ -75,16 +75,16 @@ class Table extends BaseDbTableResource
         }
 //        $refresh = $this->request->queryBool('refresh');
 
-        $_names = $this->service->getConnection()->listDatabases();
+        $names = $this->service->getConnection()->listDatabases();
 
-        $_extras =
-            DbUtilities::getSchemaExtrasForTables($this->service->getServiceId(), $_names, false, 'table,label,plural');
+        $extras =
+            DbUtilities::getSchemaExtrasForTables($this->service->getServiceId(), $names, false, 'table,label,plural');
 
-        $_tables = [];
-        foreach ($_names as $name) {
+        $tables = [];
+        foreach ($names as $name) {
             $label = '';
             $plural = '';
-            foreach ($_extras as $each) {
+            foreach ($extras as $each) {
                 if (0 == strcasecmp($name, ArrayUtils::get($each, 'table', ''))) {
                     $label = ArrayUtils::get($each, 'label');
                     $plural = ArrayUtils::get($each, 'plural');
@@ -100,10 +100,10 @@ class Table extends BaseDbTableResource
                 $plural = Inflector::pluralize($label);
             }
 
-            $_tables[] = ['name' => $name, 'label' => $label, 'plural' => $plural];
+            $tables[] = ['name' => $name, 'label' => $label, 'plural' => $plural];
         }
 
-        return $_tables;
+        return $tables;
     }
 
     /**
@@ -129,8 +129,8 @@ class Table extends BaseDbTableResource
     {
         $this->selectTable($table);
         try {
-            $_result = $this->service->getConnection()->asArray()->getAllDocs();
-            $this->service->getConnection()->asArray()->deleteDocs($_result, true);
+            $result = $this->service->getConnection()->asArray()->getAllDocs();
+            $this->service->getConnection()->asArray()->deleteDocs($result, true);
 
             return ['success' => true];
         } catch (\Exception $ex) {
@@ -161,33 +161,33 @@ class Table extends BaseDbTableResource
         if (!isset($extras, $extras['skip'])) {
             $extras['skip'] = ArrayUtils::get($extras, 'offset'); // support offset
         }
-        $_design = ArrayUtils::get($extras, 'design');
-        $_view = ArrayUtils::get($extras, 'view');
-        $_includeDocs = ArrayUtils::getBool($extras, 'include_docs');
-        $_fields = ArrayUtils::get($extras, 'fields');
+        $design = ArrayUtils::get($extras, 'design');
+        $view = ArrayUtils::get($extras, 'view');
+        $includeDocs = ArrayUtils::getBool($extras, 'include_docs');
+        $fields = ArrayUtils::get($extras, 'fields');
         try {
-            if (!empty($_design) && !empty($_view)) {
-                $_result =
-                    $this->service->getConnection()->setQueryParameters($extras)->asArray()->getView($_design, $_view);
+            if (!empty($design) && !empty($view)) {
+                $result =
+                    $this->service->getConnection()->setQueryParameters($extras)->asArray()->getView($design, $view);
             } else {
-                if (!$_includeDocs) {
-                    $_includeDocs = static::_requireMoreFields($_fields, static::DEFAULT_ID_FIELD);
+                if (!$includeDocs) {
+                    $includeDocs = static::requireMoreFields($fields, static::DEFAULT_ID_FIELD);
                     if (!isset($extras, $extras['skip'])) {
-                        $extras['include_docs'] = $_includeDocs;
+                        $extras['include_docs'] = $includeDocs;
                     }
                 }
-                $_result = $this->service->getConnection()->setQueryParameters($extras)->asArray()->getAllDocs();
+                $result = $this->service->getConnection()->setQueryParameters($extras)->asArray()->getAllDocs();
             }
 
-            $_rows = ArrayUtils::get($_result, 'rows');
-            $_out = static::cleanRecords($_rows, $_fields, static::DEFAULT_ID_FIELD, $_includeDocs);
+            $rows = ArrayUtils::get($result, 'rows');
+            $out = static::cleanRecords($rows, $fields, static::DEFAULT_ID_FIELD, $includeDocs);
             if (ArrayUtils::getBool($extras, 'include_count', false) ||
-                (0 != intval(ArrayUtils::get($_result, 'offset')))
+                (0 != intval(ArrayUtils::get($result, 'offset')))
             ) {
-                $_out['meta']['count'] = intval(ArrayUtils::get($_result, 'total_rows'));
+                $out['meta']['count'] = intval(ArrayUtils::get($result, 'total_rows'));
             }
 
-            return $_out;
+            return $out;
         } catch (\Exception $ex) {
             throw new InternalServerErrorException("Failed to filter items from '$table'.\n" . $ex->getMessage());
         }
@@ -196,11 +196,11 @@ class Table extends BaseDbTableResource
     protected function getIdsInfo($table, $fields_info = null, &$requested_fields = null, $requested_types = null)
     {
         $requested_fields = [static::ID_FIELD]; // can only be this
-        $_ids = [
+        $ids = [
             ['name' => static::ID_FIELD, 'type' => 'string', 'required' => false],
         ];
 
-        return $_ids;
+        return $ids;
     }
 
     /**
@@ -217,7 +217,7 @@ class Table extends BaseDbTableResource
         }
 
         //  Check for $record['_id']
-        $_id = ArrayUtils::get(
+        $id = ArrayUtils::get(
             $record,
             $id_field,
             //  Default to $record['id'] or null if not found
@@ -227,7 +227,7 @@ class Table extends BaseDbTableResource
         );
 
         //  Check for $record['_rev']
-        $_rev = ArrayUtils::get(
+        $rev = ArrayUtils::get(
             $record,
             static::REV_FIELD,
             //  Default if not found to $record['rev']
@@ -243,10 +243,10 @@ class Table extends BaseDbTableResource
             true
         );
 
-        $_out = [$id_field => $_id, static::REV_FIELD => $_rev];
+        $out = [$id_field => $id, static::REV_FIELD => $rev];
 
         if (empty($include)) {
-            return $_out;
+            return $out;
         }
 
         if (!is_array($include)) {
@@ -257,10 +257,10 @@ class Table extends BaseDbTableResource
             if (0 == strcasecmp($key, $id_field) || 0 == strcasecmp($key, static::REV_FIELD)) {
                 continue;
             }
-            $_out[$key] = ArrayUtils::get($record, $key);
+            $out[$key] = ArrayUtils::get($record, $key);
         }
 
-        return $_out;
+        return $out;
     }
 
     /**
@@ -277,17 +277,17 @@ class Table extends BaseDbTableResource
         $id_field = self::DEFAULT_ID_FIELD,
         $use_doc = false
     ){
-        $_out = [];
+        $out = [];
 
-        foreach ($records as $_record) {
+        foreach ($records as $record) {
             if ($use_doc) {
-                $_record = ArrayUtils::get($_record, 'doc', $_record);
+                $record = ArrayUtils::get($record, 'doc', $record);
             }
 
-            $_out[] = '*' == $include ? $_record : static::cleanRecord($_record, $include, static::DEFAULT_ID_FIELD);
+            $out[] = '*' == $include ? $record : static::cleanRecord($record, $include, static::DEFAULT_ID_FIELD);
         }
 
-        return $_out;
+        return $out;
     }
 
     /**
@@ -311,16 +311,16 @@ class Table extends BaseDbTableResource
         $continue = false,
         $single = false
     ){
-        $_ssFilters = ArrayUtils::get($extras, 'ss_filters');
-        $_fields = ArrayUtils::get($extras, 'fields');
-        $_fieldsInfo = ArrayUtils::get($extras, 'fields_info');
-        $_requireMore = ArrayUtils::get($extras, 'require_more');
-        $_updates = ArrayUtils::get($extras, 'updates');
+        $ssFilters = ArrayUtils::get($extras, 'ss_filters');
+        $fields = ArrayUtils::get($extras, 'fields');
+        $fieldsInfo = ArrayUtils::get($extras, 'fields_info');
+        $requireMore = ArrayUtils::get($extras, 'require_more');
+        $updates = ArrayUtils::get($extras, 'updates');
 
-        $_out = [];
+        $out = [];
         switch ($this->getAction()) {
             case Verbs::POST:
-                $record = $this->parseRecord($record, $_fieldsInfo, $_ssFilters);
+                $record = $this->parseRecord($record, $fieldsInfo, $ssFilters);
                 if (empty($record)) {
                     throw new BadRequestException('No valid fields were found in record.');
                 }
@@ -329,23 +329,23 @@ class Table extends BaseDbTableResource
                     return parent::addToTransaction($record, $id);
                 }
 
-                $_result = $this->service->getConnection()->asArray()->storeDoc((object)$record);
+                $result = $this->service->getConnection()->asArray()->storeDoc((object)$record);
 
-                if ($_requireMore) {
+                if ($requireMore) {
                     // for returning latest _rev
-                    $_result = array_merge($record, $_result);
+                    $result = array_merge($record, $result);
                 }
 
-                $_out = static::cleanRecord($_result, $_fields);
+                $out = static::cleanRecord($result, $fields);
                 break;
 
             case Verbs::PUT:
-                if (!empty($_updates)) {
+                if (!empty($updates)) {
                     // make sure record doesn't contain identifiers
-                    unset($_updates[static::DEFAULT_ID_FIELD]);
-                    unset($_updates[static::REV_FIELD]);
-                    $_parsed = $this->parseRecord($_updates, $_fieldsInfo, $_ssFilters, true);
-                    if (empty($_parsed)) {
+                    unset($updates[static::DEFAULT_ID_FIELD]);
+                    unset($updates[static::REV_FIELD]);
+                    $parsed = $this->parseRecord($updates, $fieldsInfo, $ssFilters, true);
+                    if (empty($parsed)) {
                         throw new BadRequestException('No valid fields were found in record.');
                     }
                 }
@@ -354,75 +354,75 @@ class Table extends BaseDbTableResource
                     return parent::addToTransaction($record, $id);
                 }
 
-                if (!empty($_updates)) {
-                    $record = $_updates;
+                if (!empty($updates)) {
+                    $record = $updates;
                 }
 
-                $_parsed = $this->parseRecord($record, $_fieldsInfo, $_ssFilters, true);
-                if (empty($_parsed)) {
+                $parsed = $this->parseRecord($record, $fieldsInfo, $ssFilters, true);
+                if (empty($parsed)) {
                     throw new BadRequestException('No valid fields were found in record.');
                 }
 
-                $_old = null;
+                $old = null;
                 if (!isset($record[static::REV_FIELD]) || $rollback) {
                     // unfortunately we need the rev, so go get the latest
-                    $_old = $this->service->getConnection()->asArray()->getDoc($id);
-                    $record[static::REV_FIELD] = ArrayUtils::get($_old, static::REV_FIELD);
+                    $old = $this->service->getConnection()->asArray()->getDoc($id);
+                    $record[static::REV_FIELD] = ArrayUtils::get($old, static::REV_FIELD);
                 }
 
-                $_result = $this->service->getConnection()->asArray()->storeDoc((object)$record);
+                $result = $this->service->getConnection()->asArray()->storeDoc((object)$record);
 
                 if ($rollback) {
                     // keep the new rev
-                    $_old = array_merge($_old, $_result);
-                    $this->addToRollback($_old);
+                    $old = array_merge($old, $result);
+                    $this->addToRollback($old);
                 }
 
-                if ($_requireMore) {
-                    $_result = array_merge($record, $_result);
+                if ($requireMore) {
+                    $result = array_merge($record, $result);
                 }
 
-                $_out = static::cleanRecord($_result, $_fields);
+                $out = static::cleanRecord($result, $fields);
                 break;
 
             case Verbs::MERGE:
             case Verbs::PATCH:
-                if (!empty($_updates)) {
-                    $record = $_updates;
+                if (!empty($updates)) {
+                    $record = $updates;
                 }
 
                 // make sure record doesn't contain identifiers
                 unset($record[static::DEFAULT_ID_FIELD]);
                 unset($record[static::REV_FIELD]);
-                $_parsed = $this->parseRecord($record, $_fieldsInfo, $_ssFilters, true);
-                if (empty($_parsed)) {
+                $parsed = $this->parseRecord($record, $fieldsInfo, $ssFilters, true);
+                if (empty($parsed)) {
                     throw new BadRequestException('No valid fields were found in record.');
                 }
 
                 // only update/patch by ids can use batching
                 if (!$single && !$continue && !$rollback) {
-                    return parent::addToTransaction($_parsed, $id);
+                    return parent::addToTransaction($parsed, $id);
                 }
 
                 // get all fields of record
-                $_old = $this->service->getConnection()->asArray()->getDoc($id);
+                $old = $this->service->getConnection()->asArray()->getDoc($id);
 
-                // merge in changes from $record to $_merge
-                $record = array_merge($_old, $record);
+                // merge in changes from $record to $merge
+                $record = array_merge($old, $record);
                 // write back the changes
-                $_result = $this->service->getConnection()->asArray()->storeDoc((object)$record);
+                $result = $this->service->getConnection()->asArray()->storeDoc((object)$record);
 
                 if ($rollback) {
                     // keep the new rev
-                    $_old = array_merge($_old, $_result);
-                    $this->addToRollback($_old);
+                    $old = array_merge($old, $result);
+                    $this->addToRollback($old);
                 }
 
-                if ($_requireMore) {
-                    $_result = array_merge($record, $_result);
+                if ($requireMore) {
+                    $result = array_merge($record, $result);
                 }
 
-                $_out = static::cleanRecord($_result, $_fields);
+                $out = static::cleanRecord($result, $fields);
                 break;
 
             case Verbs::DELETE:
@@ -430,15 +430,15 @@ class Table extends BaseDbTableResource
                     return parent::addToTransaction(null, $id);
                 }
 
-                $_old = $this->service->getConnection()->asArray()->getDoc($id);
+                $old = $this->service->getConnection()->asArray()->getDoc($id);
 
                 if ($rollback) {
-                    $this->addToRollback($_old);
+                    $this->addToRollback($old);
                 }
 
                 $this->service->getConnection()->asArray()->deleteDoc((object)$record);
 
-                $_out = static::cleanRecord($_old, $_fields);
+                $out = static::cleanRecord($old, $fields);
                 break;
 
             case Verbs::GET:
@@ -446,14 +446,14 @@ class Table extends BaseDbTableResource
                     return parent::addToTransaction(null, $id);
                 }
 
-                $_result = $this->service->getConnection()->asArray()->getDoc($id);
+                $result = $this->service->getConnection()->asArray()->getDoc($id);
 
-                $_out = static::cleanRecord($_result, $_fields);
+                $out = static::cleanRecord($result, $fields);
 
                 break;
         }
 
-        return $_out;
+        return $out;
     }
 
     /**
@@ -461,79 +461,79 @@ class Table extends BaseDbTableResource
      */
     protected function commitTransaction($extras = null)
     {
-        if (empty($this->_batchRecords) && empty($this->_batchIds)) {
+        if (empty($this->batchRecords) && empty($this->batchIds)) {
             return null;
         }
 
-        $_fields = ArrayUtils::get($extras, 'fields');
-        $_requireMore = ArrayUtils::getBool($extras, 'require_more');
+        $fields = ArrayUtils::get($extras, 'fields');
+        $requireMore = ArrayUtils::getBool($extras, 'require_more');
 
-        $_out = [];
+        $out = [];
         switch ($this->getAction()) {
             case Verbs::POST:
-                $_result = $this->service->getConnection()->asArray()->storeDocs($this->_batchRecords, true);
-                if ($_requireMore) {
-                    $_result = static::recordArrayMerge($this->_batchRecords, $_result);
+                $result = $this->service->getConnection()->asArray()->storeDocs($this->batchRecords, true);
+                if ($requireMore) {
+                    $result = static::recordArrayMerge($this->batchRecords, $result);
                 }
 
-                $_out = static::cleanRecords($_result, $_fields);
+                $out = static::cleanRecords($result, $fields);
                 break;
 
             case Verbs::PUT:
-                $_result = $this->service->getConnection()->asArray()->storeDocs($this->_batchRecords, true);
-                if ($_requireMore) {
-                    $_result = static::recordArrayMerge($this->_batchRecords, $_result);
+                $result = $this->service->getConnection()->asArray()->storeDocs($this->batchRecords, true);
+                if ($requireMore) {
+                    $result = static::recordArrayMerge($this->batchRecords, $result);
                 }
 
-                $_out = static::cleanRecords($_result, $_fields);
+                $out = static::cleanRecords($result, $fields);
                 break;
 
             case Verbs::MERGE:
             case Verbs::PATCH:
-                $_result = $this->service->getConnection()->asArray()->storeDocs($this->_batchRecords, true);
-                if ($_requireMore) {
-                    $_result = static::recordArrayMerge($this->_batchRecords, $_result);
+                $result = $this->service->getConnection()->asArray()->storeDocs($this->batchRecords, true);
+                if ($requireMore) {
+                    $result = static::recordArrayMerge($this->batchRecords, $result);
                 }
 
-                $_out = static::cleanRecords($_result, $_fields);
+                $out = static::cleanRecords($result, $fields);
                 break;
 
             case Verbs::DELETE:
-                $_out = [];
-                if ($_requireMore) {
-                    $_result =
+                $out = [];
+                if ($requireMore) {
+                    $result =
                         $this->service->getConnection()
                             ->setQueryParameters($extras)
                             ->asArray()
                             ->include_docs(true)
                             ->keys(
-                                $this->_batchIds
+                                $this->batchIds
                             )
                             ->getAllDocs();
-                    $_rows = ArrayUtils::get($_result, 'rows');
-                    $_out = static::cleanRecords($_rows, $_fields, static::DEFAULT_ID_FIELD, true);
+                    $rows = ArrayUtils::get($result, 'rows');
+                    $out = static::cleanRecords($rows, $fields, static::DEFAULT_ID_FIELD, true);
                 }
 
-                $_result = $this->service->getConnection()->asArray()->deleteDocs($this->_batchRecords, true);
-                if (empty($_out)) {
-                    $_out = static::cleanRecords($_result, $_fields);
+                $result = $this->service->getConnection()->asArray()->deleteDocs($this->batchRecords, true);
+                if (empty($out)) {
+                    $out = static::cleanRecords($result, $fields);
                 }
                 break;
 
             case Verbs::GET:
-                $_result =
+                $result =
                     $this->service->getConnection()
                         ->setQueryParameters($extras)
                         ->asArray()
-                        ->include_docs($_requireMore)
+                        ->include_docs($requireMore)
                         ->keys(
-                            $this->_batchIds
+                            $this->batchIds
                         )
                         ->getAllDocs();
-                $_rows = ArrayUtils::get($_result, 'rows');
-                $_out = static::cleanRecords($_rows, $_fields, static::DEFAULT_ID_FIELD, true);
+                $rows = ArrayUtils::get($result, 'rows');
+                $out = static::cleanRecords($rows, $fields, static::DEFAULT_ID_FIELD, true);
 
-                if (count($this->_batchIds) !== count($_out)) {
+                if (count($this->batchIds) !== count($out)) {
                     throw new BadRequestException('Batch Error: Not all requested ids were found to retrieve.');
                 }
                 break;
@@ -542,10 +542,10 @@ class Table extends BaseDbTableResource
                 break;
         }
 
-        $this->_batchIds = [];
-        $this->_batchRecords = [];
+        $this->batchIds = [];
+        $this->batchRecords = [];
 
-        return $_out;
+        return $out;
     }
 
     /**
@@ -561,24 +561,24 @@ class Table extends BaseDbTableResource
      */
     protected function rollbackTransaction()
     {
-        if (!empty($this->_rollbackRecords)) {
+        if (!empty($this->rollbackRecords)) {
             switch ($this->getAction()) {
                 case Verbs::POST:
-                    $this->service->getConnection()->asArray()->deleteDocs($this->_rollbackRecords, true);
+                    $this->service->getConnection()->asArray()->deleteDocs($this->rollbackRecords, true);
                     break;
 
                 case Verbs::PUT:
                 case Verbs::PATCH:
                 case Verbs::MERGE:
                 case Verbs::DELETE:
-                    $this->service->getConnection()->asArray()->storeDocs($this->_rollbackRecords, true);
+                    $this->service->getConnection()->asArray()->storeDocs($this->rollbackRecords, true);
                     break;
                 default:
                     // nothing to do here, rollback handled on bulk calls
                     break;
             }
 
-            $this->_rollbackRecords = [];
+            $this->rollbackRecords = [];
         }
 
         return true;
@@ -586,8 +586,8 @@ class Table extends BaseDbTableResource
 
     public function getApiDocInfo()
     {
-        $_commonResponses = ApiDocUtilities::getCommonResponses();
-        $_baseTableOps = [
+        $commonResponses = ApiDocUtilities::getCommonResponses();
+        $baseTableOps = [
             [
                 'method'           => 'GET',
                 'summary'          => 'getRecordsByView() - Retrieve one or more records by using a view.',
@@ -681,7 +681,7 @@ class Table extends BaseDbTableResource
                         ],
                     ]
                 ),
-                'responseMessages' => $_commonResponses,
+                'responseMessages' => $commonResponses,
             ],
             [
                 'method'           => 'GET',
@@ -752,7 +752,7 @@ class Table extends BaseDbTableResource
                         ],
                     ]
                 ),
-                'responseMessages' => $_commonResponses,
+                'responseMessages' => $commonResponses,
             ],
             [
                 'method'           => 'POST',
@@ -830,7 +830,7 @@ class Table extends BaseDbTableResource
                         'required'      => true,
                     ],
                 ],
-                'responseMessages' => $_commonResponses,
+                'responseMessages' => $commonResponses,
             ],
             [
                 'method'           => 'GET',
@@ -935,7 +935,7 @@ class Table extends BaseDbTableResource
                         ],
                     ]
                 ),
-                'responseMessages' => $_commonResponses,
+                'responseMessages' => $commonResponses,
             ],
             [
                 'method'           => 'POST',
@@ -1024,7 +1024,7 @@ class Table extends BaseDbTableResource
                         ],
                     ]
                 ),
-                'responseMessages' => $_commonResponses,
+                'responseMessages' => $commonResponses,
             ],
             [
                 'method'           => 'PUT',
@@ -1113,7 +1113,7 @@ class Table extends BaseDbTableResource
                         ],
                     ]
                 ),
-                'responseMessages' => $_commonResponses,
+                'responseMessages' => $commonResponses,
             ],
             [
                 'method'           => 'PUT',
@@ -1193,7 +1193,7 @@ class Table extends BaseDbTableResource
                         ],
                     ]
                 ),
-                'responseMessages' => $_commonResponses,
+                'responseMessages' => $commonResponses,
             ],
             [
                 'method'           => 'PATCH',
@@ -1282,7 +1282,7 @@ class Table extends BaseDbTableResource
                         ],
                     ]
                 ),
-                'responseMessages' => $_commonResponses,
+                'responseMessages' => $commonResponses,
             ],
             [
                 'method'           => 'PATCH',
@@ -1362,7 +1362,7 @@ class Table extends BaseDbTableResource
                         ],
                     ]
                 ),
-                'responseMessages' => $_commonResponses,
+                'responseMessages' => $commonResponses,
             ],
             [
                 'method'           => 'DELETE',
@@ -1443,7 +1443,7 @@ class Table extends BaseDbTableResource
                         ],
                     ]
                 ),
-                'responseMessages' => $_commonResponses,
+                'responseMessages' => $commonResponses,
             ],
             [
                 'method'           => 'DELETE',
@@ -1533,7 +1533,7 @@ class Table extends BaseDbTableResource
                         ],
                     ]
                 ),
-                'responseMessages' => $_commonResponses,
+                'responseMessages' => $commonResponses,
             ],
         ];
     }

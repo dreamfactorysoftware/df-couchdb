@@ -92,8 +92,8 @@ class CouchDb extends BaseNoSqlDbService
         if (!isset($db) && (null === $db = ArrayUtils::get($options, 'db', null, true))) {
             //  Attempt to find db in connection string
             $db = strstr(substr($dsn, static::DSN_PREFIX_LENGTH), '/');
-            if (false !== $_pos = strpos($db, '?')) {
-                $db = substr($db, 0, $_pos);
+            if (false !== $pos = strpos($db, '?')) {
+                $db = substr($db, 0, $pos);
             }
             $db = trim($db, '/');
         }
@@ -104,8 +104,8 @@ class CouchDb extends BaseNoSqlDbService
 
         try {
             $this->dbConn = @new \couchClient($dsn, 'default');
-        } catch (\Exception $_ex) {
-            throw new InternalServerErrorException("CouchDb Service Exception:\n{$_ex->getMessage()}");
+        } catch (\Exception $ex) {
+            throw new InternalServerErrorException("CouchDb Service Exception:\n{$ex->getMessage()}");
         }
     }
 
@@ -116,8 +116,8 @@ class CouchDb extends BaseNoSqlDbService
     {
         try {
             $this->dbConn = null;
-        } catch (\Exception $_ex) {
-            error_log("Failed to disconnect from database.\n{$_ex->getMessage()}");
+        } catch (\Exception $ex) {
+            error_log("Failed to disconnect from database.\n{$ex->getMessage()}");
         }
     }
 
@@ -142,17 +142,17 @@ class CouchDb extends BaseNoSqlDbService
      */
     public function correctTableName(&$name)
     {
-        static $_existing = null;
+        static $existing = null;
 
-        if (!$_existing) {
-            $_existing = $this->dbConn->listDatabases();
+        if (!$existing) {
+            $existing = $this->dbConn->listDatabases();
         }
 
         if (empty($name)) {
             throw new BadRequestException('Table name can not be empty.');
         }
 
-        if (false === array_search($name, $_existing)) {
+        if (false === array_search($name, $existing)) {
             throw new NotFoundException("Table '$name' not found.");
         }
 
@@ -166,7 +166,7 @@ class CouchDb extends BaseNoSqlDbService
     {
         try {
             return parent::handleResource($resources);
-        } catch (NotFoundException $_ex) {
+        } catch (NotFoundException $ex) {
             // If version 1.x, the resource could be a table
 //            if ($this->request->getApiVersion())
 //            {
@@ -178,7 +178,7 @@ class CouchDb extends BaseNoSqlDbService
 //                return $resource->handleRequest( $this->request, $newPath, $this->outputFormat );
 //            }
 
-            throw $_ex;
+            throw $ex;
         }
     }
 
@@ -187,45 +187,45 @@ class CouchDb extends BaseNoSqlDbService
      */
     public function getAccessList()
     {
-        $_resources = [];
+        $resources = [];
 
 //        $refresh = $this->request->queryBool( 'refresh' );
 
-        $_name = Schema::RESOURCE_NAME . '/';
-        $_access = $this->getPermissions($_name);
-        if (!empty($_access)) {
-            $_resources[] = $_name;
-            $_resources[] = $_name . '*';
+        $name = Schema::RESOURCE_NAME . '/';
+        $access = $this->getPermissions($name);
+        if (!empty($access)) {
+            $resources[] = $name;
+            $resources[] = $name . '*';
         }
 
-        $_result = $this->dbConn->listDatabases();
-        foreach ($_result as $_name) {
-            if ('_' != substr($_name, 0, 1)) {
-                $_name = Schema::RESOURCE_NAME . '/' . $_name;
-                $_access = $this->getPermissions($_name);
-                if (!empty($_access)) {
-                    $_resources[] = $_name;
+        $result = $this->dbConn->listDatabases();
+        foreach ($result as $name) {
+            if ('_' != substr($name, 0, 1)) {
+                $name = Schema::RESOURCE_NAME . '/' . $name;
+                $access = $this->getPermissions($name);
+                if (!empty($access)) {
+                    $resources[] = $name;
                 }
             }
         }
 
-        $_name = Table::RESOURCE_NAME . '/';
-        $_access = $this->getPermissions($_name);
-        if (!empty($_access)) {
-            $_resources[] = $_name;
-            $_resources[] = $_name . '*';
+        $name = Table::RESOURCE_NAME . '/';
+        $access = $this->getPermissions($name);
+        if (!empty($access)) {
+            $resources[] = $name;
+            $resources[] = $name . '*';
         }
 
-        foreach ($_result as $_name) {
-            if ('_' != substr($_name, 0, 1)) {
-                $_name = Table::RESOURCE_NAME . '/' . $_name;
-                $_access = $this->getPermissions($_name);
-                if (!empty($_access)) {
-                    $_resources[] = $_name;
+        foreach ($result as $name) {
+            if ('_' != substr($name, 0, 1)) {
+                $name = Table::RESOURCE_NAME . '/' . $name;
+                $access = $this->getPermissions($name);
+                if (!empty($access)) {
+                    $resources[] = $name;
                 }
             }
         }
 
-        return $_resources;
+        return $resources;
     }
 }
