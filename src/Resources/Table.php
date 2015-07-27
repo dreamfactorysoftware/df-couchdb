@@ -1,13 +1,12 @@
 <?php
 namespace DreamFactory\Core\CouchDb\Resources;
 
+use DreamFactory\Core\Enums\ApiOptions;
 use DreamFactory\Library\Utility\ArrayUtils;
 use DreamFactory\Library\Utility\Enums\Verbs;
 use DreamFactory\Library\Utility\Inflector;
 use DreamFactory\Core\Exceptions\BadRequestException;
 use DreamFactory\Core\Exceptions\InternalServerErrorException;
-use DreamFactory\Core\Exceptions\NotFoundException;
-use DreamFactory\Core\Exceptions\RestException;
 use DreamFactory\Core\Resources\BaseDbTableResource;
 use DreamFactory\Core\Utility\ApiDocUtilities;
 use DreamFactory\Core\Utility\DbUtilities;
@@ -159,12 +158,12 @@ class Table extends BaseDbTableResource
         }
 
         if (!isset($extras, $extras['skip'])) {
-            $extras['skip'] = ArrayUtils::get($extras, 'offset'); // support offset
+            $extras['skip'] = ArrayUtils::get($extras, ApiOptions::OFFSET); // support offset
         }
         $design = ArrayUtils::get($extras, 'design');
         $view = ArrayUtils::get($extras, 'view');
         $includeDocs = ArrayUtils::getBool($extras, 'include_docs');
-        $fields = ArrayUtils::get($extras, 'fields');
+        $fields = ArrayUtils::get($extras, ApiOptions::FIELDS);
         try {
             if (!empty($design) && !empty($view)) {
                 $result =
@@ -181,7 +180,7 @@ class Table extends BaseDbTableResource
 
             $rows = ArrayUtils::get($result, 'rows');
             $out = static::cleanRecords($rows, $fields, static::DEFAULT_ID_FIELD, $includeDocs);
-            if (ArrayUtils::getBool($extras, 'include_count', false) ||
+            if (ArrayUtils::getBool($extras, ApiOptions::INCLUDE_COUNT, false) ||
                 (0 != intval(ArrayUtils::get($result, 'offset')))
             ) {
                 $out['meta']['count'] = intval(ArrayUtils::get($result, 'total_rows'));
@@ -221,9 +220,8 @@ class Table extends BaseDbTableResource
             $record,
             $id_field,
             //  Default to $record['id'] or null if not found
-            ArrayUtils::get($record, 'id', null, false, true),
-            false,
-            true
+            ArrayUtils::get($record, 'id'),
+            false
         );
 
         //  Check for $record['_rev']
@@ -235,12 +233,10 @@ class Table extends BaseDbTableResource
                 $record,
                 'rev',
                 //  Default if not found to $record['value']['rev']
-                ArrayUtils::getDeep($record, 'value', 'rev', null, false, true),
-                false,
-                true
+                ArrayUtils::getDeep($record, 'value', 'rev'),
+                false
             ),
-            false,
-            true
+            false
         );
 
         $out = [$id_field => $id, static::REV_FIELD => $rev];
@@ -312,7 +308,7 @@ class Table extends BaseDbTableResource
         $single = false
     ){
         $ssFilters = ArrayUtils::get($extras, 'ss_filters');
-        $fields = ArrayUtils::get($extras, 'fields');
+        $fields = ArrayUtils::get($extras, ApiOptions::FIELDS);
         $fieldsInfo = ArrayUtils::get($extras, 'fields_info');
         $requireMore = ArrayUtils::get($extras, 'require_more');
         $updates = ArrayUtils::get($extras, 'updates');
@@ -465,7 +461,7 @@ class Table extends BaseDbTableResource
             return null;
         }
 
-        $fields = ArrayUtils::get($extras, 'fields');
+        $fields = ArrayUtils::get($extras, ApiOptions::FIELDS);
         $requireMore = ArrayUtils::getBool($extras, 'require_more');
 
         $out = [];
