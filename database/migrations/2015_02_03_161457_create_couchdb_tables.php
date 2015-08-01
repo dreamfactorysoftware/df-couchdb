@@ -14,7 +14,7 @@ class CreateCouchDbTables extends Migration
     {
         // CouchDB Service Configuration
         Schema::create(
-            'couch_db_config',
+            'couchdb_config',
             function (Blueprint $t){
                 $t->integer('service_id')->unsigned()->primary();
                 $t->foreign('service_id')->references('id')->on('service')->onDelete('cascade');
@@ -32,6 +32,6 @@ class CreateCouchDbTables extends Migration
     public function down()
     {
         // CouchDB Service Configuration
-        Schema::dropIfExists('couch_db_config');
+        Schema::dropIfExists('couchdb_config');
     }
 }

@@ -39,7 +39,7 @@ class CouchDbTest extends \DreamFactory\Core\Testing\DbServiceTestCase
                 'label'       => 'CouchDB Database',
                 'description' => 'CouchDB database for testing',
                 'is_active'   => true,
-                'type'        => 'couch_db',
+                'type'        => 'couchdb',
                 'config'      => ['dsn' => env('COUCHDB_DSN'), 'options' => $options]
             ]
         );
@@ -340,8 +340,8 @@ class CouchDbTest extends \DreamFactory\Core\Testing\DbServiceTestCase
 //    {
 //        DB::table( "services" )->insert(
 //            array(
-//                [ "name" => "db2", "label" => "Database 2", "description" => "Local Database 2", "is_active" => 1, "type" => "couch_db" ],
-//                [ "name" => "db3", "label" => "Database 3", "description" => "Local Database 3", "is_active" => 1, "type" => "couch_db" ]
+//                [ "name" => "db2", "label" => "Database 2", "description" => "Local Database 2", "is_active" => 1, "type" => "couchdb" ],
+//                [ "name" => "db3", "label" => "Database 3", "description" => "Local Database 3", "is_active" => 1, "type" => "couchdb" ]
 //            )
 //        );
 //
@@ -397,8 +397,8 @@ class CouchDbTest extends \DreamFactory\Core\Testing\DbServiceTestCase
 //    {
 //        DB::table( "services" )->insert(
 //            array(
-//                [ "name" => "db2", "label" => "Database 2", "description" => "Local Database 2", "is_active" => 1, "type" => "couch_db" ],
-//                [ "name" => "db3", "label" => "Database 3", "description" => "Local Database 3", "is_active" => 1, "type" => "couch_db" ]
+//                [ "name" => "db2", "label" => "Database 2", "description" => "Local Database 2", "is_active" => 1, "type" => "couchdb" ],
+//                [ "name" => "db3", "label" => "Database 3", "description" => "Local Database 3", "is_active" => 1, "type" => "couchdb" ]
 //            )
 //        );
 //
@@ -423,8 +423,8 @@ class CouchDbTest extends \DreamFactory\Core\Testing\DbServiceTestCase
 //    {
 //        DB::table( "services" )->insert(
 //            array(
-//                [ "name" => "db2", "label" => "Database 2", "description" => "Local Database 2", "is_active" => 1, "type" => "couch_db" ],
-//                [ "name" => "db3", "label" => "Database 3", "description" => "Local Database 3", "is_active" => 1, "type" => "couch_db" ]
+//                [ "name" => "db2", "label" => "Database 2", "description" => "Local Database 2", "is_active" => 1, "type" => "couchdb" ],
+//                [ "name" => "db3", "label" => "Database 3", "description" => "Local Database 3", "is_active" => 1, "type" => "couchdb" ]
 //            )
 //        );
 //
@@ -460,8 +460,8 @@ class CouchDbTest extends \DreamFactory\Core\Testing\DbServiceTestCase
 //    {
 //        DB::table( "services" )->insert(
 //            array(
-//                [ "name" => "db2", "label" => "Database 2", "description" => "Local Database 2", "is_active" => 1, "type" => "couch_db" ],
-//                [ "name" => "db3", "label" => "Database 3", "description" => "Local Database 3", "is_active" => 1, "type" => "couch_db" ]
+//                [ "name" => "db2", "label" => "Database 2", "description" => "Local Database 2", "is_active" => 1, "type" => "couchdb" ],
+//                [ "name" => "db3", "label" => "Database 3", "description" => "Local Database 3", "is_active" => 1, "type" => "couchdb" ]
 //            )
 //        );
 //
@@ -489,8 +489,8 @@ class CouchDbTest extends \DreamFactory\Core\Testing\DbServiceTestCase
 //    {
 //        DB::table( "services" )->insert(
 //            array(
-//                [ "name" => "db2", "label" => "Database 2", "description" => "Local Database 2", "is_active" => 1, "type" => "couch_db" ],
-//                [ "name" => "db3", "label" => "Database 3", "description" => "Local Database 3", "is_active" => 1, "type" => "couch_db" ]
+//                [ "name" => "db2", "label" => "Database 2", "description" => "Local Database 2", "is_active" => 1, "type" => "couchdb" ],
+//                [ "name" => "db3", "label" => "Database 3", "description" => "Local Database 3", "is_active" => 1, "type" => "couchdb" ]
 //            )
 //        );
 //
@@ -573,15 +573,15 @@ class CouchDbTest extends \DreamFactory\Core\Testing\DbServiceTestCase
 //    {
 //        DB::table( "services" )->insert(
 //            array(
-//                [ "name" => "db2", "label" => "Database 2", "description" => "Local Database 2", "is_active" => 1, "type" => "couch_db" ],
-//                [ "name" => "db3", "label" => "Database 3", "description" => "Local Database 3", "is_active" => 1, "type" => "couch_db" ]
+//                [ "name" => "db2", "label" => "Database 2", "description" => "Local Database 2", "is_active" => 1, "type" => "couchdb" ],
+//                [ "name" => "db3", "label" => "Database 3", "description" => "Local Database 3", "is_active" => 1, "type" => "couchdb" ]
 //            )
 //        );
 //
 //        $payload = '[{"id":2},{"id":3}]';
 //
 //        $rs = $this->callWithPayload( Verbs::DELETE, $this->buildPath( '_table/todo?fields=name,type'), $payload );
-//        $this->assertEquals( '{"record":[{"name":"db2","type":"couch_db"},{"name":"db3","type":"couch_db"}]}', $rs->getContent() );
+//        $this->assertEquals( '{"record":[{"name":"db2","type":"couchdb"},{"name":"db3","type":"couchdb"}]}', $rs->getContent() );
 //    }
 //
     public function testDropTable()

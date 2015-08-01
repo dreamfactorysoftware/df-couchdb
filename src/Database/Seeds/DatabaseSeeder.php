@@ -13,7 +13,7 @@ class DatabaseSeeder extends BaseModelSeeder
 
     protected $records = [
         [
-            'name'           => 'couch_db',
+            'name'           => 'couchdb',
             'class_name'     => CouchDb::class,
             'config_handler' => CouchDbConfig::class,
             'label'          => 'CouchDB',

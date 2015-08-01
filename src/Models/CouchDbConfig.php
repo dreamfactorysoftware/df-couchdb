@@ -17,7 +17,7 @@ use Illuminate\Database\Query\Builder;
  */
 class CouchDbConfig extends BaseServiceConfigModel
 {
-    protected $table = 'couch_db_config';
+    protected $table = 'couchdb_config';
 
     protected $fillable = ['service_id', 'dsn', 'options'];
 
