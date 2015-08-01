@@ -1,2 +1,2 @@
-# rave-couchdb
-DreamFactory RAVE service for CouchDB
+# df-couchdb
+DreamFactory service for CouchDB
