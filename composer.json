@@ -1,0 +1,51 @@
+{
+  "name": "dreamfactory/df-couchdb",
+  "description": "The DreamFactory(tm) CouchDB Service.",
+  "keywords": [
+    "dreamfactory",
+    "dsp",
+    "rest",
+    "couchdb",
+    "nosql",
+    "database",
+    "db"
+  ],
+  "homepage": "https://www.dreamfactory.com/",
+  "license": "Apache-2.0",
+  "authors": [
+    {
+      "name": "Arif Islam",
+      "email": "arifislam@dreamfactory.com"
+    },
+    {
+      "name": "Jerry Ablan",
+      "email": "jerryablan@dreamfactory.com"
+    },
+    {
+      "name": "Lee Hicks",
+      "email": "leehicks@dreamfactory.com"
+    }
+  ],
+  "support": {
+    "email": "support@dreamfactory.com",
+    "source": "https://github.com/dreamfactorysoftware/df-couchdb",
+    "issues": "https://github.com/dreamfactorysoftware/df-couchdb/issues",
+    "wiki": "https://wiki.dreamfactory.com"
+  },
+  "minimum-stability": "dev",
+  "prefer-stable": true,
+  "require": {
+    "dreamfactory/df-core": "dev-develop as dev-master",
+    "dready92/php-on-couch": "*"
+  },
+  "autoload": {
+    "psr-4": {
+      "DreamFactory\\Core\\CouchDb\\": "src/"
+    }
+  },
+  "extra": {
+    "branch-alias": {
+      "dev-develop": "0.0.x-dev"
+    }
+  }
+}
