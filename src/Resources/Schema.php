@@ -18,7 +18,7 @@ class Schema extends BaseNoSqlDbSchemaResource
     /**
      * @var null|CouchDb
      */
-    protected $service = null;
+    protected $parent = null;
 
     //*************************************************************************
     //	Methods
@@ -29,7 +29,15 @@ class Schema extends BaseNoSqlDbSchemaResource
      */
     public function getService()
     {
-        return $this->service;
+        return $this->parent;
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function listResources($schema = null, $refresh = false)
+    {
+        return $this->parent->getConnection()->listDatabases();
     }
 
     /**
@@ -42,10 +50,10 @@ class Schema extends BaseNoSqlDbSchemaResource
         }
 //        $refresh = $this->request->queryBool('refresh');
 
-        $names = $this->service->getConnection()->listDatabases();
+        $names = $this->listResources();
 
         $extras =
-            DbUtilities::getSchemaExtrasForTables($this->service->getServiceId(), $names, false, 'table,label,plural');
+            DbUtilities::getSchemaExtrasForTables($this->parent->getServiceId(), $names, false, 'table,label,plural');
 
         $tables = [];
         foreach ($names as $name) {
@@ -83,8 +91,8 @@ class Schema extends BaseNoSqlDbSchemaResource
         $name = (is_array($table)) ? ArrayUtils::get($table, 'name') : $table;
 
         try {
-            $this->service->getConnection()->useDatabase($name);
-            $out = $this->service->getConnection()->asArray()->getDatabaseInfos();
+            $this->parent->getConnection()->useDatabase($name);
+            $out = $this->parent->getConnection()->asArray()->getDatabaseInfos();
             $out['name'] = $name;
             $out['access'] = $this->getPermissions($name);
 
@@ -106,8 +114,8 @@ class Schema extends BaseNoSqlDbSchemaResource
         }
 
         try {
-            $this->service->getConnection()->useDatabase($table);
-            $this->service->getConnection()->asArray()->createDatabase();
+            $this->parent->getConnection()->useDatabase($table);
+            $this->parent->getConnection()->asArray()->createDatabase();
             // $result['ok'] = true
 
             $out = array('name' => $table);
@@ -127,7 +135,7 @@ class Schema extends BaseNoSqlDbSchemaResource
             throw new BadRequestException("No 'name' field in data.");
         }
 
-        $this->service->getConnection()->useDatabase($table);
+        $this->parent->getConnection()->useDatabase($table);
 
 //		throw new InternalServerErrorException( "Failed to update table '$name'." );
         return array('name' => $table);
@@ -144,8 +152,8 @@ class Schema extends BaseNoSqlDbSchemaResource
         }
 
         try {
-            $this->service->getConnection()->useDatabase($name);
-            $this->service->getConnection()->asArray()->deleteDatabase();
+            $this->parent->getConnection()->useDatabase($name);
+            $this->parent->getConnection()->asArray()->deleteDatabase();
 
             // $result['ok'] = true
 
