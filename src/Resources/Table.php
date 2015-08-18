@@ -4,12 +4,10 @@ namespace DreamFactory\Core\CouchDb\Resources;
 use DreamFactory\Core\Enums\ApiOptions;
 use DreamFactory\Library\Utility\ArrayUtils;
 use DreamFactory\Library\Utility\Enums\Verbs;
-use DreamFactory\Library\Utility\Inflector;
 use DreamFactory\Core\Exceptions\BadRequestException;
 use DreamFactory\Core\Exceptions\InternalServerErrorException;
 use DreamFactory\Core\Resources\BaseDbTableResource;
 use DreamFactory\Core\Utility\ApiDocUtilities;
-use DreamFactory\Core\Utility\DbUtilities;
 use DreamFactory\Core\CouchDb\Services\CouchDb;
 
 class Table extends BaseDbTableResource
@@ -38,7 +36,7 @@ class Table extends BaseDbTableResource
     /**
      * @var null|CouchDb
      */
-    protected $service = null;
+    protected $parent = null;
 
     //*************************************************************************
     //	Methods
@@ -49,7 +47,7 @@ class Table extends BaseDbTableResource
      */
     public function getService()
     {
-        return $this->service;
+        return $this->parent;
     }
 
     /**
@@ -59,7 +57,7 @@ class Table extends BaseDbTableResource
      */
     public function selectTable($name)
     {
-        $this->service->getConnection()->useDatabase($name);
+        $this->parent->getConnection()->useDatabase($name);
 
         return $name;
     }
@@ -67,42 +65,9 @@ class Table extends BaseDbTableResource
     /**
      * {@inheritdoc}
      */
-    public function getResources($only_handlers = false)
+    public function listResources($schema = null, $refresh = false)
     {
-        if ($only_handlers) {
-            return [];
-        }
-//        $refresh = $this->request->queryBool('refresh');
-
-        $names = $this->service->getConnection()->listDatabases();
-
-        $extras =
-            DbUtilities::getSchemaExtrasForTables($this->service->getServiceId(), $names, false, 'table,label,plural');
-
-        $tables = [];
-        foreach ($names as $name) {
-            $label = '';
-            $plural = '';
-            foreach ($extras as $each) {
-                if (0 == strcasecmp($name, ArrayUtils::get($each, 'table', ''))) {
-                    $label = ArrayUtils::get($each, 'label');
-                    $plural = ArrayUtils::get($each, 'plural');
-                    break;
-                }
-            }
-
-            if (empty($label)) {
-                $label = Inflector::camelize($name, ['_', '.'], true);
-            }
-
-            if (empty($plural)) {
-                $plural = Inflector::pluralize($label);
-            }
-
-            $tables[] = ['name' => $name, 'label' => $label, 'plural' => $plural];
-        }
-
-        return $tables;
+        return $this->parent->getConnection()->listDatabases();
     }
 
     /**
@@ -128,8 +93,8 @@ class Table extends BaseDbTableResource
     {
         $this->selectTable($table);
         try {
-            $result = $this->service->getConnection()->asArray()->getAllDocs();
-            $this->service->getConnection()->asArray()->deleteDocs($result, true);
+            $result = $this->parent->getConnection()->asArray()->getAllDocs();
+            $this->parent->getConnection()->asArray()->deleteDocs($result, true);
 
             return ['success' => true];
         } catch (\Exception $ex) {
@@ -167,7 +132,7 @@ class Table extends BaseDbTableResource
         try {
             if (!empty($design) && !empty($view)) {
                 $result =
-                    $this->service->getConnection()->setQueryParameters($extras)->asArray()->getView($design, $view);
+                    $this->parent->getConnection()->setQueryParameters($extras)->asArray()->getView($design, $view);
             } else {
                 if (!$includeDocs) {
                     $includeDocs = static::requireMoreFields($fields, static::DEFAULT_ID_FIELD);
@@ -175,7 +140,7 @@ class Table extends BaseDbTableResource
                         $extras['include_docs'] = $includeDocs;
                     }
                 }
-                $result = $this->service->getConnection()->setQueryParameters($extras)->asArray()->getAllDocs();
+                $result = $this->parent->getConnection()->setQueryParameters($extras)->asArray()->getAllDocs();
             }
 
             $rows = ArrayUtils::get($result, 'rows');
@@ -325,7 +290,7 @@ class Table extends BaseDbTableResource
                     return parent::addToTransaction($record, $id);
                 }
 
-                $result = $this->service->getConnection()->asArray()->storeDoc((object)$record);
+                $result = $this->parent->getConnection()->asArray()->storeDoc((object)$record);
 
                 if ($requireMore) {
                     // for returning latest _rev
@@ -362,11 +327,11 @@ class Table extends BaseDbTableResource
                 $old = null;
                 if (!isset($record[static::REV_FIELD]) || $rollback) {
                     // unfortunately we need the rev, so go get the latest
-                    $old = $this->service->getConnection()->asArray()->getDoc($id);
+                    $old = $this->parent->getConnection()->asArray()->getDoc($id);
                     $record[static::REV_FIELD] = ArrayUtils::get($old, static::REV_FIELD);
                 }
 
-                $result = $this->service->getConnection()->asArray()->storeDoc((object)$record);
+                $result = $this->parent->getConnection()->asArray()->storeDoc((object)$record);
 
                 if ($rollback) {
                     // keep the new rev
@@ -401,12 +366,12 @@ class Table extends BaseDbTableResource
                 }
 
                 // get all fields of record
-                $old = $this->service->getConnection()->asArray()->getDoc($id);
+                $old = $this->parent->getConnection()->asArray()->getDoc($id);
 
                 // merge in changes from $record to $merge
                 $record = array_merge($old, $record);
                 // write back the changes
-                $result = $this->service->getConnection()->asArray()->storeDoc((object)$record);
+                $result = $this->parent->getConnection()->asArray()->storeDoc((object)$record);
 
                 if ($rollback) {
                     // keep the new rev
@@ -426,13 +391,13 @@ class Table extends BaseDbTableResource
                     return parent::addToTransaction(null, $id);
                 }
 
-                $old = $this->service->getConnection()->asArray()->getDoc($id);
+                $old = $this->parent->getConnection()->asArray()->getDoc($id);
 
                 if ($rollback) {
                     $this->addToRollback($old);
                 }
 
-                $this->service->getConnection()->asArray()->deleteDoc((object)$record);
+                $this->parent->getConnection()->asArray()->deleteDoc((object)$record);
 
                 $out = static::cleanRecord($old, $fields);
                 break;
@@ -442,7 +407,7 @@ class Table extends BaseDbTableResource
                     return parent::addToTransaction(null, $id);
                 }
 
-                $result = $this->service->getConnection()->asArray()->getDoc($id);
+                $result = $this->parent->getConnection()->asArray()->getDoc($id);
 
                 $out = static::cleanRecord($result, $fields);
 
@@ -467,7 +432,7 @@ class Table extends BaseDbTableResource
         $out = [];
         switch ($this->getAction()) {
             case Verbs::POST:
-                $result = $this->service->getConnection()->asArray()->storeDocs($this->batchRecords, true);
+                $result = $this->parent->getConnection()->asArray()->storeDocs($this->batchRecords, true);
                 if ($requireMore) {
                     $result = static::recordArrayMerge($this->batchRecords, $result);
                 }
@@ -476,7 +441,7 @@ class Table extends BaseDbTableResource
                 break;
 
             case Verbs::PUT:
-                $result = $this->service->getConnection()->asArray()->storeDocs($this->batchRecords, true);
+                $result = $this->parent->getConnection()->asArray()->storeDocs($this->batchRecords, true);
                 if ($requireMore) {
                     $result = static::recordArrayMerge($this->batchRecords, $result);
                 }
@@ -486,7 +451,7 @@ class Table extends BaseDbTableResource
 
             case Verbs::MERGE:
             case Verbs::PATCH:
-                $result = $this->service->getConnection()->asArray()->storeDocs($this->batchRecords, true);
+                $result = $this->parent->getConnection()->asArray()->storeDocs($this->batchRecords, true);
                 if ($requireMore) {
                     $result = static::recordArrayMerge($this->batchRecords, $result);
                 }
@@ -498,7 +463,7 @@ class Table extends BaseDbTableResource
                 $out = [];
                 if ($requireMore) {
                     $result =
-                        $this->service->getConnection()
+                        $this->parent->getConnection()
                             ->setQueryParameters($extras)
                             ->asArray()
                             ->include_docs(true)
@@ -510,7 +475,7 @@ class Table extends BaseDbTableResource
                     $out = static::cleanRecords($rows, $fields, static::DEFAULT_ID_FIELD, true);
                 }
 
-                $result = $this->service->getConnection()->asArray()->deleteDocs($this->batchRecords, true);
+                $result = $this->parent->getConnection()->asArray()->deleteDocs($this->batchRecords, true);
                 if (empty($out)) {
                     $out = static::cleanRecords($result, $fields);
                 }
@@ -518,7 +483,7 @@ class Table extends BaseDbTableResource
 
             case Verbs::GET:
                 $result =
-                    $this->service->getConnection()
+                    $this->parent->getConnection()
                         ->setQueryParameters($extras)
                         ->asArray()
                         ->include_docs($requireMore)
@@ -560,14 +525,14 @@ class Table extends BaseDbTableResource
         if (!empty($this->rollbackRecords)) {
             switch ($this->getAction()) {
                 case Verbs::POST:
-                    $this->service->getConnection()->asArray()->deleteDocs($this->rollbackRecords, true);
+                    $this->parent->getConnection()->asArray()->deleteDocs($this->rollbackRecords, true);
                     break;
 
                 case Verbs::PUT:
                 case Verbs::PATCH:
                 case Verbs::MERGE:
                 case Verbs::DELETE:
-                    $this->service->getConnection()->asArray()->storeDocs($this->rollbackRecords, true);
+                    $this->parent->getConnection()->asArray()->storeDocs($this->rollbackRecords, true);
                     break;
                 default:
                     // nothing to do here, rollback handled on bulk calls
