@@ -43,49 +43,6 @@ class Schema extends BaseNoSqlDbSchemaResource
     /**
      * {@inheritdoc}
      */
-    public function getResources($only_handlers = false)
-    {
-        if ($only_handlers) {
-            return [];
-        }
-//        $refresh = $this->request->queryBool('refresh');
-
-        $names = $this->listResources();
-
-        $extras =
-            DbUtilities::getSchemaExtrasForTables($this->parent->getServiceId(), $names, false, 'table,label,plural');
-
-        $tables = [];
-        foreach ($names as $name) {
-            if ('_' != substr($name, 0, 1)) {
-                $label = '';
-                $plural = '';
-                foreach ($extras as $each) {
-                    if (0 == strcasecmp($name, ArrayUtils::get($each, 'table', ''))) {
-                        $label = ArrayUtils::get($each, 'label');
-                        $plural = ArrayUtils::get($each, 'plural');
-                        break;
-                    }
-                }
-
-                if (empty($label)) {
-                    $label = Inflector::camelize($name, ['_', '.'], true);
-                }
-
-                if (empty($plural)) {
-                    $plural = Inflector::pluralize($label);
-                }
-
-                $tables[] = ['name' => $name, 'label' => $label, 'plural' => $plural];
-            }
-        }
-
-        return $tables;
-    }
-
-    /**
-     * {@inheritdoc}
-     */
     public function describeTable($table, $refresh = true)
     {
         $name = (is_array($table)) ? ArrayUtils::get($table, 'name') : $table;

@@ -4,12 +4,10 @@ namespace DreamFactory\Core\CouchDb\Resources;
 use DreamFactory\Core\Enums\ApiOptions;
 use DreamFactory\Library\Utility\ArrayUtils;
 use DreamFactory\Library\Utility\Enums\Verbs;
-use DreamFactory\Library\Utility\Inflector;
 use DreamFactory\Core\Exceptions\BadRequestException;
 use DreamFactory\Core\Exceptions\InternalServerErrorException;
 use DreamFactory\Core\Resources\BaseDbTableResource;
 use DreamFactory\Core\Utility\ApiDocUtilities;
-use DreamFactory\Core\Utility\DbUtilities;
 use DreamFactory\Core\CouchDb\Services\CouchDb;
 
 class Table extends BaseDbTableResource
@@ -70,47 +68,6 @@ class Table extends BaseDbTableResource
     public function listResources($schema = null, $refresh = false)
     {
         return $this->parent->getConnection()->listDatabases();
-    }
-
-    /**
-     * {@inheritdoc}
-     */
-    public function getResources($only_handlers = false)
-    {
-        if ($only_handlers) {
-            return [];
-        }
-//        $refresh = $this->request->queryBool('refresh');
-
-        $names = $this->listResources();
-
-        $extras =
-            DbUtilities::getSchemaExtrasForTables($this->parent->getServiceId(), $names, false, 'table,label,plural');
-
-        $tables = [];
-        foreach ($names as $name) {
-            $label = '';
-            $plural = '';
-            foreach ($extras as $each) {
-                if (0 == strcasecmp($name, ArrayUtils::get($each, 'table', ''))) {
-                    $label = ArrayUtils::get($each, 'label');
-                    $plural = ArrayUtils::get($each, 'plural');
-                    break;
-                }
-            }
-
-            if (empty($label)) {
-                $label = Inflector::camelize($name, ['_', '.'], true);
-            }
-
-            if (empty($plural)) {
-                $plural = Inflector::pluralize($label);
-            }
-
-            $tables[] = ['name' => $name, 'label' => $label, 'plural' => $plural];
-        }
-
-        return $tables;
     }
 
     /**
