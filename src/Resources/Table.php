@@ -65,14 +65,6 @@ class Table extends BaseDbTableResource
     /**
      * {@inheritdoc}
      */
-    public function listResources($schema = null, $refresh = false)
-    {
-        return $this->parent->getConnection()->listDatabases();
-    }
-
-    /**
-     * {@inheritdoc}
-     */
     public function updateRecordsByFilter($table, $record, $filter = null, $params = [], $extras = [])
     {
         throw new BadRequestException("SQL-like filters are not currently available for CouchDB.\n");
