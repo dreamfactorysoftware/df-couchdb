@@ -1,6 +1,7 @@
 <?php
 namespace DreamFactory\Core\CouchDb\Resources;
 
+use DreamFactory\Core\Database\ColumnSchema;
 use DreamFactory\Core\Enums\ApiOptions;
 use DreamFactory\Library\Utility\ArrayUtils;
 use DreamFactory\Library\Utility\Enums\Verbs;
@@ -153,7 +154,7 @@ class Table extends BaseDbTableResource
     {
         $requested_fields = [static::ID_FIELD]; // can only be this
         $ids = [
-            ['name' => static::ID_FIELD, 'type' => 'string', 'required' => false],
+            new ColumnSchema(['name' => static::ID_FIELD, 'type' => 'string', 'required' => false]),
         ];
 
         return $ids;
@@ -246,11 +247,11 @@ class Table extends BaseDbTableResource
     /**
      * {@inheritdoc}
      */
-    protected function initTransaction($handle = null)
+    protected function initTransaction($table_name, &$id_fields = null, $id_types = null, $require_ids = true)
     {
-        $this->selectTable($handle);
+        $this->selectTable($table_name);
 
-        return parent::initTransaction($handle);
+        return parent::initTransaction($table_name, $id_fields, $id_types, $require_ids);
     }
 
     /**
@@ -266,14 +267,13 @@ class Table extends BaseDbTableResource
     ){
         $ssFilters = ArrayUtils::get($extras, 'ss_filters');
         $fields = ArrayUtils::get($extras, ApiOptions::FIELDS);
-        $fieldsInfo = ArrayUtils::get($extras, 'fields_info');
         $requireMore = ArrayUtils::get($extras, 'require_more');
         $updates = ArrayUtils::get($extras, 'updates');
 
         $out = [];
         switch ($this->getAction()) {
             case Verbs::POST:
-                $record = $this->parseRecord($record, $fieldsInfo, $ssFilters);
+                $record = $this->parseRecord($record, $this->tableFieldsInfo, $ssFilters);
                 if (empty($record)) {
                     throw new BadRequestException('No valid fields were found in record.');
                 }
@@ -297,7 +297,7 @@ class Table extends BaseDbTableResource
                     // make sure record doesn't contain identifiers
                     unset($updates[static::DEFAULT_ID_FIELD]);
                     unset($updates[static::REV_FIELD]);
-                    $parsed = $this->parseRecord($updates, $fieldsInfo, $ssFilters, true);
+                    $parsed = $this->parseRecord($updates, $this->tableFieldsInfo, $ssFilters, true);
                     if (empty($parsed)) {
                         throw new BadRequestException('No valid fields were found in record.');
                     }
@@ -311,7 +311,7 @@ class Table extends BaseDbTableResource
                     $record = $updates;
                 }
 
-                $parsed = $this->parseRecord($record, $fieldsInfo, $ssFilters, true);
+                $parsed = $this->parseRecord($record, $this->tableFieldsInfo, $ssFilters, true);
                 if (empty($parsed)) {
                     throw new BadRequestException('No valid fields were found in record.');
                 }
@@ -347,7 +347,7 @@ class Table extends BaseDbTableResource
                 // make sure record doesn't contain identifiers
                 unset($record[static::DEFAULT_ID_FIELD]);
                 unset($record[static::REV_FIELD]);
-                $parsed = $this->parseRecord($record, $fieldsInfo, $ssFilters, true);
+                $parsed = $this->parseRecord($record, $this->tableFieldsInfo, $ssFilters, true);
                 if (empty($parsed)) {
                     throw new BadRequestException('No valid fields were found in record.');
                 }
