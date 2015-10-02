@@ -45,10 +45,11 @@ class CouchDbConfig extends BaseServiceConfigModel
             case 'dsn':
                 $schema['label'] = 'Connection String';
                 $schema['default'] = 'http://localhost:5984';
-                $schema['description'] = 'The username, password, and db values can be added in the options section.';
+                $schema['description'] = 'The connection string for the service. The username, password, and db values can be added in the connection string or in the options below.';
                 break;
             case 'options':
                 $schema['type'] = 'object(string,string)';
+                $schema['description'] = 'An array of options for the connection. Examples are username, password, and db name.';
                 break;
         }
     }
