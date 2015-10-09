@@ -776,11 +776,11 @@ class Table extends BaseDbTableResource
                     [
                         'name'          => 'X-HTTP-METHOD',
                         'description'   => 'Override request using POST to tunnel other http request, such as GET.',
-                        'enum'          => ['', 'GET'],
+                        'enum'          => ['GET'],
                         'allowMultiple' => false,
                         'type'          => 'string',
                         'paramType'     => 'header',
-                        'required'      => true,
+                        'required'      => false,
                     ],
                 ],
                 'responseMessages' => $commonResponses,
@@ -969,7 +969,7 @@ class Table extends BaseDbTableResource
                         [
                             'name'          => 'X-HTTP-METHOD',
                             'description'   => 'Override request using POST to tunnel other http request, such as DELETE.',
-                            'enum'          => ['', 'GET', 'PUT', 'PATCH', 'DELETE'],
+                            'enum'          => ['GET', 'PUT', 'PATCH', 'DELETE'],
                             'allowMultiple' => false,
                             'type'          => 'string',
                             'paramType'     => 'header',
