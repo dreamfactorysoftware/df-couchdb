@@ -780,7 +780,7 @@ class Table extends BaseDbTableResource
                         'allowMultiple' => false,
                         'type'          => 'string',
                         'paramType'     => 'header',
-                        'required'      => true,
+                        'required'      => false,
                     ],
                 ],
                 'responseMessages' => $commonResponses,

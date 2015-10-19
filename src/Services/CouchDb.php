@@ -69,51 +69,37 @@ class CouchDb extends BaseNoSqlDbService
      * @throws \InvalidArgumentException
      * @throws \Exception
      */
-    public function __construct($settings = array())
+    public function __construct($settings = [])
     {
         parent::__construct($settings);
 
         $config = ArrayUtils::clean(ArrayUtils::get($settings, 'config'));
-        Session::replaceLookups( $config, true );
+        Session::replaceLookups($config, true);
 
         $dsn = strval(ArrayUtils::get($config, 'dsn'));
         if (empty($dsn)) {
             $dsn = 'http://localhost:5984';
         }
 
-        $options = ArrayUtils::get($config, 'options', []);
-        if (empty($options)) {
-            $options = [];
-        }
-        $user = ArrayUtils::get($config, 'username');
-        $password = ArrayUtils::get($config, 'password');
-
-        // support old configuration options of user, pwd, and db in credentials directly
-        if (!isset($options['username']) && isset($user)) {
-            $options['username'] = $user;
-        }
-        if (!isset($options['password']) && isset($password)) {
-            $options['password'] = $password;
-        }
-        if (!isset($options['db']) && (null !== $db = ArrayUtils::get($config, 'db', null, true))) {
-            $options['db'] = $db;
+        $options = [];
+        if (isset($config['options'])) {
+            $options = $config['options'];
         }
 
-        if (!isset($db) && (null === $db = ArrayUtils::get($options, 'db', null, true))) {
+        $db = isset($options['db']) ? $options['db'] : null;
+        if (!isset($db)) {
             //  Attempt to find db in connection string
-            $db = strstr($dsn, '/');
-            if (false !== $pos = strpos($db, '?')) {
-                $db = substr($db, 0, $pos);
-            }
+            $temp = trim(strstr($dsn, '//'), '/');
+            $db = strstr($temp, '/');
             $db = trim($db, '/');
         }
 
         if (empty($db)) {
-            throw new InternalServerErrorException("No CouchDb database selected in configuration.");
+            $db = 'default';
         }
 
         try {
-            $this->dbConn = @new \couchClient($dsn, 'default');
+            $this->dbConn = @new \couchClient($dsn, $db, $options);
         } catch (\Exception $ex) {
             throw new InternalServerErrorException("CouchDb Service Exception:\n{$ex->getMessage()}");
         }
@@ -178,6 +164,7 @@ class CouchDb extends BaseNoSqlDbService
         $this->tableNames = [];
         $this->tables = [];
     }
+
     /**
      * {@inheritdoc}
      */
