@@ -44,7 +44,7 @@ class CouchDb extends BaseNoSqlDbService
     /**
      * @var array
      */
-    protected $resources = [
+    protected static $resources = [
         Schema::RESOURCE_NAME => [
             'name'       => Schema::RESOURCE_NAME,
             'class_name' => Schema::class,
