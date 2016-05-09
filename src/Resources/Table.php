@@ -1,7 +1,7 @@
 <?php
 namespace DreamFactory\Core\CouchDb\Resources;
 
-use DreamFactory\Core\Database\ColumnSchema;
+use DreamFactory\Core\Database\Schema\ColumnSchema;
 use DreamFactory\Core\Enums\ApiOptions;
 use DreamFactory\Library\Utility\ArrayUtils;
 use DreamFactory\Library\Utility\Enums\Verbs;
