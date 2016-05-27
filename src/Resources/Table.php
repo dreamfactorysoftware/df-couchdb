@@ -1,14 +1,17 @@
 <?php
 namespace DreamFactory\Core\CouchDb\Resources;
 
-use DreamFactory\Core\Database\ColumnSchema;
+use DreamFactory\Core\Database\Schema\ColumnSchema;
 use DreamFactory\Core\Enums\ApiOptions;
+use DreamFactory\Core\Exceptions\NotFoundException;
+use DreamFactory\Core\Exceptions\RestException;
 use DreamFactory\Library\Utility\ArrayUtils;
 use DreamFactory\Library\Utility\Enums\Verbs;
 use DreamFactory\Core\Exceptions\BadRequestException;
 use DreamFactory\Core\Exceptions\InternalServerErrorException;
 use DreamFactory\Core\Resources\BaseDbTableResource;
 use DreamFactory\Core\CouchDb\Services\CouchDb;
+use PhpSpec\Exception\Exception;
 
 class Table extends BaseDbTableResource
 {
@@ -86,7 +89,9 @@ class Table extends BaseDbTableResource
         $this->selectTable($table);
         try {
             $result = $this->parent->getConnection()->asArray()->getAllDocs();
-            $this->parent->getConnection()->asArray()->deleteDocs($result, true);
+            $rows = ArrayUtils::get($result, 'rows');
+            $out = static::cleanRecords($rows, [static::ID_FIELD,static::REV_FIELD], static::DEFAULT_ID_FIELD, true);
+            $this->parent->getConnection()->asArray()->deleteDocs($out, true);
 
             return ['success' => true];
         } catch (\Exception $ex) {
@@ -270,139 +275,143 @@ class Table extends BaseDbTableResource
         $updates = ArrayUtils::get($extras, 'updates');
 
         $out = [];
-        switch ($this->getAction()) {
-            case Verbs::POST:
-                $record = $this->parseRecord($record, $this->tableFieldsInfo, $ssFilters);
-                if (empty($record)) {
-                    throw new BadRequestException('No valid fields were found in record.');
-                }
+        try {
+            switch ($this->getAction()) {
+                case Verbs::POST:
+                    $record = $this->parseRecord($record, $this->tableFieldsInfo, $ssFilters);
+                    if (empty($record)) {
+                        throw new BadRequestException('No valid fields were found in record.');
+                    }
 
-                if ($rollback) {
-                    return parent::addToTransaction($record, $id);
-                }
+                    if ($rollback) {
+                        return parent::addToTransaction($record, $id);
+                    }
 
-                $result = $this->parent->getConnection()->asArray()->storeDoc((object)$record);
+                    $result = $this->parent->getConnection()->asArray()->storeDoc((object)$record);
 
-                if ($requireMore) {
-                    // for returning latest _rev
-                    $result = array_merge($record, $result);
-                }
+                    if ($requireMore) {
+                        // for returning latest _rev
+                        $result = array_merge($record, $result);
+                    }
 
-                $out = static::cleanRecord($result, $fields);
-                break;
+                    $out = static::cleanRecord($result, $fields);
+                    break;
 
-            case Verbs::PUT:
-                if (!empty($updates)) {
-                    // make sure record doesn't contain identifiers
-                    unset($updates[static::DEFAULT_ID_FIELD]);
-                    unset($updates[static::REV_FIELD]);
-                    $parsed = $this->parseRecord($updates, $this->tableFieldsInfo, $ssFilters, true);
+                case Verbs::PUT:
+                    if (!empty($updates)) {
+                        // make sure record doesn't contain identifiers
+                        unset($updates[static::DEFAULT_ID_FIELD]);
+                        unset($updates[static::REV_FIELD]);
+                        $parsed = $this->parseRecord($updates, $this->tableFieldsInfo, $ssFilters, true);
+                        if (empty($parsed)) {
+                            throw new BadRequestException('No valid fields were found in record.');
+                        }
+                    }
+
+                    if ($rollback) {
+                        return parent::addToTransaction($record, $id);
+                    }
+
+                    if (!empty($updates)) {
+                        $record = $updates;
+                    }
+
+                    $parsed = $this->parseRecord($record, $this->tableFieldsInfo, $ssFilters, true);
                     if (empty($parsed)) {
                         throw new BadRequestException('No valid fields were found in record.');
                     }
-                }
 
-                if ($rollback) {
-                    return parent::addToTransaction($record, $id);
-                }
+                    $old = null;
+                    if (!isset($record[static::REV_FIELD]) || $rollback) {
+                        // unfortunately we need the rev, so go get the latest
+                        $old = $this->parent->getConnection()->asArray()->getDoc($id);
+                        $record[static::REV_FIELD] = ArrayUtils::get($old, static::REV_FIELD);
+                    }
 
-                if (!empty($updates)) {
-                    $record = $updates;
-                }
+                    $result = $this->parent->getConnection()->asArray()->storeDoc((object)$record);
 
-                $parsed = $this->parseRecord($record, $this->tableFieldsInfo, $ssFilters, true);
-                if (empty($parsed)) {
-                    throw new BadRequestException('No valid fields were found in record.');
-                }
+                    if ($rollback) {
+                        // keep the new rev
+                        $old = array_merge($old, $result);
+                        $this->addToRollback($old);
+                    }
 
-                $old = null;
-                if (!isset($record[static::REV_FIELD]) || $rollback) {
-                    // unfortunately we need the rev, so go get the latest
+                    if ($requireMore) {
+                        $result = array_merge($record, $result);
+                    }
+
+                    $out = static::cleanRecord($result, $fields);
+                    break;
+
+                case Verbs::MERGE:
+                case Verbs::PATCH:
+                    if (!empty($updates)) {
+                        $record = $updates;
+                    }
+
+                    // make sure record doesn't contain identifiers
+                    unset($record[static::DEFAULT_ID_FIELD]);
+                    unset($record[static::REV_FIELD]);
+                    $parsed = $this->parseRecord($record, $this->tableFieldsInfo, $ssFilters, true);
+                    if (empty($parsed)) {
+                        throw new BadRequestException('No valid fields were found in record.');
+                    }
+
+                    // only update/patch by ids can use batching
+                    if (!$single && !$continue && !$rollback) {
+                        return parent::addToTransaction($parsed, $id);
+                    }
+
+                    // get all fields of record
                     $old = $this->parent->getConnection()->asArray()->getDoc($id);
-                    $record[static::REV_FIELD] = ArrayUtils::get($old, static::REV_FIELD);
-                }
 
-                $result = $this->parent->getConnection()->asArray()->storeDoc((object)$record);
+                    // merge in changes from $record to $merge
+                    $record = array_merge($old, $record);
+                    // write back the changes
+                    $result = $this->parent->getConnection()->asArray()->storeDoc((object)$record);
 
-                if ($rollback) {
-                    // keep the new rev
-                    $old = array_merge($old, $result);
-                    $this->addToRollback($old);
-                }
+                    if ($rollback) {
+                        // keep the new rev
+                        $old = array_merge($old, $result);
+                        $this->addToRollback($old);
+                    }
 
-                if ($requireMore) {
-                    $result = array_merge($record, $result);
-                }
+                    if ($requireMore) {
+                        $result = array_merge($record, $result);
+                    }
 
-                $out = static::cleanRecord($result, $fields);
-                break;
+                    $out = static::cleanRecord($result, $fields);
+                    break;
 
-            case Verbs::MERGE:
-            case Verbs::PATCH:
-                if (!empty($updates)) {
-                    $record = $updates;
-                }
+                case Verbs::DELETE:
+                    if (!$single && !$continue && !$rollback) {
+                        return parent::addToTransaction(null, $id);
+                    }
 
-                // make sure record doesn't contain identifiers
-                unset($record[static::DEFAULT_ID_FIELD]);
-                unset($record[static::REV_FIELD]);
-                $parsed = $this->parseRecord($record, $this->tableFieldsInfo, $ssFilters, true);
-                if (empty($parsed)) {
-                    throw new BadRequestException('No valid fields were found in record.');
-                }
+                    $old = $this->parent->getConnection()->asArray()->getDoc($id);
 
-                // only update/patch by ids can use batching
-                if (!$single && !$continue && !$rollback) {
-                    return parent::addToTransaction($parsed, $id);
-                }
+                    if ($rollback) {
+                        $this->addToRollback($old);
+                    }
 
-                // get all fields of record
-                $old = $this->parent->getConnection()->asArray()->getDoc($id);
+                    $this->parent->getConnection()->asArray()->deleteDoc((object)$old);
 
-                // merge in changes from $record to $merge
-                $record = array_merge($old, $record);
-                // write back the changes
-                $result = $this->parent->getConnection()->asArray()->storeDoc((object)$record);
+                    $out = static::cleanRecord($old, $fields);
+                    break;
 
-                if ($rollback) {
-                    // keep the new rev
-                    $old = array_merge($old, $result);
-                    $this->addToRollback($old);
-                }
+                case Verbs::GET:
+                    if (!$single) {
+                        return parent::addToTransaction(null, $id);
+                    }
 
-                if ($requireMore) {
-                    $result = array_merge($record, $result);
-                }
+                    $result = $this->parent->getConnection()->asArray()->getDoc($id);
 
-                $out = static::cleanRecord($result, $fields);
-                break;
+                    $out = static::cleanRecord($result, $fields);
 
-            case Verbs::DELETE:
-                if (!$single && !$continue && !$rollback) {
-                    return parent::addToTransaction(null, $id);
-                }
-
-                $old = $this->parent->getConnection()->asArray()->getDoc($id);
-
-                if ($rollback) {
-                    $this->addToRollback($old);
-                }
-
-                $this->parent->getConnection()->asArray()->deleteDoc((object)$record);
-
-                $out = static::cleanRecord($old, $fields);
-                break;
-
-            case Verbs::GET:
-                if (!$single) {
-                    return parent::addToTransaction(null, $id);
-                }
-
-                $result = $this->parent->getConnection()->asArray()->getDoc($id);
-
-                $out = static::cleanRecord($result, $fields);
-
-                break;
+                    break;
+            }
+        } catch (\couchException $ex) {
+            throw new RestException($ex->getCode(), $ex->getMessage());
         }
 
         return $out;
@@ -451,22 +460,19 @@ class Table extends BaseDbTableResource
                 break;
 
             case Verbs::DELETE:
-                $out = [];
-                if ($requireMore) {
-                    $result =
-                        $this->parent->getConnection()
-                            ->setQueryParameters($extras)
-                            ->asArray()
-                            ->include_docs(true)
-                            ->keys(
-                                $this->batchIds
-                            )
-                            ->getAllDocs();
-                    $rows = ArrayUtils::get($result, 'rows');
-                    $out = static::cleanRecords($rows, $fields, static::DEFAULT_ID_FIELD, true);
-                }
+                $result =
+                    $this->parent->getConnection()
+                        ->setQueryParameters($extras)
+                        ->asArray()
+                        ->include_docs($requireMore)
+                        ->keys(
+                            $this->batchIds
+                        )
+                        ->getAllDocs();
+                $rows = ArrayUtils::get($result, 'rows');
+                $out = static::cleanRecords($rows, $fields, static::DEFAULT_ID_FIELD, true);
 
-                $result = $this->parent->getConnection()->asArray()->deleteDocs($this->batchRecords, true);
+                $result = $this->parent->getConnection()->asArray()->deleteDocs($out, true);
                 if (empty($out)) {
                     $out = static::cleanRecords($result, $fields);
                 }

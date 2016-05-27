@@ -2,7 +2,7 @@
 namespace DreamFactory\Core\CouchDb\Services;
 
 use DreamFactory\Core\Components\DbSchemaExtras;
-use DreamFactory\Core\Database\TableSchema;
+use DreamFactory\Core\Database\Schema\TableSchema;
 use DreamFactory\Core\Utility\Session;
 use DreamFactory\Library\Utility\ArrayUtils;
 use DreamFactory\Core\Exceptions\InternalServerErrorException;
