@@ -1,7 +1,6 @@
 <?php
 namespace DreamFactory\Core\CouchDb\Models;
 
-use DreamFactory\Library\Utility\ArrayUtils;
 use DreamFactory\Core\Exceptions\BadRequestException;
 use DreamFactory\Core\Models\BaseServiceConfigModel;
 use Illuminate\Database\Query\Builder;
@@ -25,8 +24,8 @@ class CouchDbConfig extends BaseServiceConfigModel
 
     public static function validateConfig($config, $create = true)
     {
-        if ((null === ArrayUtils::get($config, 'dsn', null, true))) {
-            if ((null === ArrayUtils::getDeep($config, 'options', 'db', null, true))) {
+        if ((null === array_get($config, 'dsn'))) {
+            if ((null === array_get($config, 'options.db'))) {
                 throw new BadRequestException('Database name must be included in the \'dsn\' or as an \'option\' attribute.');
             }
         }
