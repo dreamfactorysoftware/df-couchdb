@@ -1,7 +1,6 @@
 <?php
 namespace DreamFactory\Core\CouchDb\Resources;
 
-use DreamFactory\Library\Utility\ArrayUtils;
 use DreamFactory\Core\Exceptions\BadRequestException;
 use DreamFactory\Core\Exceptions\InternalServerErrorException;
 use DreamFactory\Core\Resources\BaseNoSqlDbSchemaResource;
@@ -35,7 +34,7 @@ class Schema extends BaseNoSqlDbSchemaResource
      */
     public function describeTable($table, $refresh = true)
     {
-        $name = (is_array($table)) ? ArrayUtils::get($table, 'name') : $table;
+        $name = (is_array($table)) ? array_get($table, 'name') : $table;
 
         try {
             $this->parent->getConnection()->useDatabase($name);
@@ -93,7 +92,7 @@ class Schema extends BaseNoSqlDbSchemaResource
      */
     public function deleteTable($table, $check_empty = false)
     {
-        $name = (is_array($table)) ? ArrayUtils::get($table, 'name') : $table;
+        $name = (is_array($table)) ? array_get($table, 'name') : $table;
         if (empty($name)) {
             throw new BadRequestException('Table name can not be empty.');
         }

@@ -4,7 +4,6 @@ namespace DreamFactory\Core\CouchDb\Services;
 use DreamFactory\Core\Components\DbSchemaExtras;
 use DreamFactory\Core\Database\Schema\TableSchema;
 use DreamFactory\Core\Utility\Session;
-use DreamFactory\Library\Utility\ArrayUtils;
 use DreamFactory\Core\Exceptions\InternalServerErrorException;
 use DreamFactory\Core\Services\BaseNoSqlDbService;
 use DreamFactory\Core\CouchDb\Resources\Schema;
@@ -73,10 +72,10 @@ class CouchDb extends BaseNoSqlDbService
     {
         parent::__construct($settings);
 
-        $config = ArrayUtils::clean(ArrayUtils::get($settings, 'config'));
+        $config = (array)array_get($settings, 'config');
         Session::replaceLookups($config, true);
 
-        $dsn = strval(ArrayUtils::get($config, 'dsn'));
+        $dsn = strval(array_get($config, 'dsn'));
         if (empty($dsn)) {
             $dsn = 'http://localhost:5984';
         }

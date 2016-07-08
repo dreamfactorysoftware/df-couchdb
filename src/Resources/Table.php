@@ -1,19 +1,17 @@
 <?php
 namespace DreamFactory\Core\CouchDb\Resources;
 
+use DreamFactory\Core\CouchDb\Services\CouchDb;
 use DreamFactory\Core\Database\Schema\ColumnSchema;
 use DreamFactory\Core\Enums\ApiOptions;
-use DreamFactory\Core\Exceptions\NotFoundException;
 use DreamFactory\Core\Exceptions\RestException;
-use DreamFactory\Library\Utility\ArrayUtils;
-use DreamFactory\Library\Utility\Enums\Verbs;
 use DreamFactory\Core\Exceptions\BadRequestException;
 use DreamFactory\Core\Exceptions\InternalServerErrorException;
-use DreamFactory\Core\Resources\BaseDbTableResource;
-use DreamFactory\Core\CouchDb\Services\CouchDb;
-use PhpSpec\Exception\Exception;
+use DreamFactory\Core\Resources\BaseNoSqlDbTableResource;
+use DreamFactory\Library\Utility\Enums\Verbs;
+use DreamFactory\Library\Utility\Scalar;
 
-class Table extends BaseDbTableResource
+class Table extends BaseNoSqlDbTableResource
 {
     //*************************************************************************
     //	Constants
@@ -89,7 +87,7 @@ class Table extends BaseDbTableResource
         $this->selectTable($table);
         try {
             $result = $this->parent->getConnection()->asArray()->getAllDocs();
-            $rows = ArrayUtils::get($result, 'rows');
+            $rows = array_get($result, 'rows');
             $out = static::cleanRecords($rows, [static::ID_FIELD,static::REV_FIELD], static::DEFAULT_ID_FIELD, true);
             $this->parent->getConnection()->asArray()->deleteDocs($out, true);
 
@@ -120,12 +118,12 @@ class Table extends BaseDbTableResource
         }
 
         if (!isset($extras, $extras['skip'])) {
-            $extras['skip'] = ArrayUtils::get($extras, ApiOptions::OFFSET); // support offset
+            $extras['skip'] = array_get($extras, ApiOptions::OFFSET); // support offset
         }
-        $design = ArrayUtils::get($extras, 'design');
-        $view = ArrayUtils::get($extras, 'view');
-        $includeDocs = ArrayUtils::getBool($extras, 'include_docs');
-        $fields = ArrayUtils::get($extras, ApiOptions::FIELDS);
+        $design = array_get($extras, 'design');
+        $view = array_get($extras, 'view');
+        $includeDocs = Scalar::boolval(array_get($extras, 'include_docs'));
+        $fields = array_get($extras, ApiOptions::FIELDS);
         try {
             if (!empty($design) && !empty($view)) {
                 $result =
@@ -140,12 +138,12 @@ class Table extends BaseDbTableResource
                 $result = $this->parent->getConnection()->setQueryParameters($extras)->asArray()->getAllDocs();
             }
 
-            $rows = ArrayUtils::get($result, 'rows');
+            $rows = array_get($result, 'rows');
             $out = static::cleanRecords($rows, $fields, static::DEFAULT_ID_FIELD, $includeDocs);
-            if (ArrayUtils::getBool($extras, ApiOptions::INCLUDE_COUNT, false) ||
-                (0 != intval(ArrayUtils::get($result, 'offset')))
+            if (Scalar::boolval(array_get($extras, ApiOptions::INCLUDE_COUNT, false)) ||
+                (0 != intval(array_get($result, 'offset')))
             ) {
-                $out['meta']['count'] = intval(ArrayUtils::get($result, 'total_rows'));
+                $out['meta']['count'] = intval(array_get($result, 'total_rows'));
             }
 
             return $out;
@@ -178,27 +176,18 @@ class Table extends BaseDbTableResource
         }
 
         //  Check for $record['_id']
-        $id = ArrayUtils::get(
-            $record,
-            $id_field,
+        $id = array_get($record, $id_field,
             //  Default to $record['id'] or null if not found
-            ArrayUtils::get($record, 'id'),
-            false
+            array_get($record, 'id')
         );
 
         //  Check for $record['_rev']
-        $rev = ArrayUtils::get(
-            $record,
-            static::REV_FIELD,
+        $rev = array_get($record, static::REV_FIELD,
             //  Default if not found to $record['rev']
-            ArrayUtils::get(
-                $record,
-                'rev',
+            array_get($record, 'rev',
                 //  Default if not found to $record['value']['rev']
-                ArrayUtils::getDeep($record, 'value', 'rev'),
-                false
-            ),
-            false
+                array_get($record, 'value.rev')
+            )
         );
 
         $out = [$id_field => $id, static::REV_FIELD => $rev];
@@ -215,7 +204,7 @@ class Table extends BaseDbTableResource
             if (0 == strcasecmp($key, $id_field) || 0 == strcasecmp($key, static::REV_FIELD)) {
                 continue;
             }
-            $out[$key] = ArrayUtils::get($record, $key);
+            $out[$key] = array_get($record, $key);
         }
 
         return $out;
@@ -239,7 +228,7 @@ class Table extends BaseDbTableResource
 
         foreach ($records as $record) {
             if ($use_doc) {
-                $record = ArrayUtils::get($record, 'doc', $record);
+                $record = array_get($record, 'doc', $record);
             }
 
             $out[] = '*' == $include ? $record : static::cleanRecord($record, $include, static::DEFAULT_ID_FIELD);
@@ -269,10 +258,10 @@ class Table extends BaseDbTableResource
         $continue = false,
         $single = false
     ){
-        $ssFilters = ArrayUtils::get($extras, 'ss_filters');
-        $fields = ArrayUtils::get($extras, ApiOptions::FIELDS);
-        $requireMore = ArrayUtils::get($extras, 'require_more');
-        $updates = ArrayUtils::get($extras, 'updates');
+        $ssFilters = array_get($extras, 'ss_filters');
+        $fields = array_get($extras, ApiOptions::FIELDS);
+        $requireMore = array_get($extras, 'require_more');
+        $updates = array_get($extras, 'updates');
 
         $out = [];
         try {
@@ -325,7 +314,7 @@ class Table extends BaseDbTableResource
                     if (!isset($record[static::REV_FIELD]) || $rollback) {
                         // unfortunately we need the rev, so go get the latest
                         $old = $this->parent->getConnection()->asArray()->getDoc($id);
-                        $record[static::REV_FIELD] = ArrayUtils::get($old, static::REV_FIELD);
+                        $record[static::REV_FIELD] = array_get($old, static::REV_FIELD);
                     }
 
                     $result = $this->parent->getConnection()->asArray()->storeDoc((object)$record);
@@ -426,8 +415,8 @@ class Table extends BaseDbTableResource
             return null;
         }
 
-        $fields = ArrayUtils::get($extras, ApiOptions::FIELDS);
-        $requireMore = ArrayUtils::getBool($extras, 'require_more');
+        $fields = array_get($extras, ApiOptions::FIELDS);
+        $requireMore = Scalar::boolval(array_get($extras, 'require_more'));
 
         $out = [];
         switch ($this->getAction()) {
@@ -469,7 +458,7 @@ class Table extends BaseDbTableResource
                             $this->batchIds
                         )
                         ->getAllDocs();
-                $rows = ArrayUtils::get($result, 'rows');
+                $rows = array_get($result, 'rows');
                 $out = static::cleanRecords($rows, $fields, static::DEFAULT_ID_FIELD, true);
 
                 $result = $this->parent->getConnection()->asArray()->deleteDocs($out, true);
@@ -488,7 +477,7 @@ class Table extends BaseDbTableResource
                             $this->batchIds
                         )
                         ->getAllDocs();
-                $rows = ArrayUtils::get($result, 'rows');
+                $rows = array_get($result, 'rows');
                 $out = static::cleanRecords($rows, $fields, static::DEFAULT_ID_FIELD, true);
 
                 if (count($this->batchIds) !== count($out)) {
