@@ -141,7 +141,7 @@ class CouchDb extends BaseNoSqlDbService
                 $names[strtolower($table)] = new TableSchema(['name' => $table]);
             }
             // merge db extras
-            if (!empty($extrasEntries = $this->getSchemaExtrasForTables($tables, false))) {
+            if (!empty($extrasEntries = $this->getSchemaExtrasForTables($tables))) {
                 foreach ($extrasEntries as $extras) {
                     if (!empty($extraName = strtolower(strval($extras['table'])))) {
                         if (array_key_exists($extraName, $names)) {
