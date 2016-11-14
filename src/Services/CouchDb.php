@@ -1,13 +1,12 @@
 <?php
 namespace DreamFactory\Core\CouchDb\Services;
 
-use DreamFactory\Core\Components\DbSchemaExtras;
-use DreamFactory\Core\Database\Schema\TableSchema;
-use DreamFactory\Core\Utility\Session;
-use DreamFactory\Core\Exceptions\InternalServerErrorException;
-use DreamFactory\Core\Services\BaseNoSqlDbService;
-use DreamFactory\Core\CouchDb\Resources\Schema;
+use DreamFactory\Core\CouchDb\Database\Schema\Schema;
 use DreamFactory\Core\CouchDb\Resources\Table;
+use DreamFactory\Core\Exceptions\InternalServerErrorException;
+use DreamFactory\Core\Resources\DbSchemaResource;
+use DreamFactory\Core\Services\BaseDbService;
+use DreamFactory\Core\Utility\Session;
 
 /**
  * CouchDb
@@ -15,38 +14,19 @@ use DreamFactory\Core\CouchDb\Resources\Table;
  * A service to handle CouchDB NoSQL (schema-less) database
  * services accessed through the REST API.
  */
-class CouchDb extends BaseNoSqlDbService
+class CouchDb extends BaseDbService
 {
-    use DbSchemaExtras;
-
-    //*************************************************************************
-    //	Constants
-    //*************************************************************************
-
     //*************************************************************************
     //	Members
     //*************************************************************************
 
     /**
-     * @var \couchClient|null
-     */
-    protected $dbConn = null;
-    /**
-     * @var array
-     */
-    protected $tableNames = [];
-    /**
-     * @var array
-     */
-    protected $tables = [];
-
-    /**
      * @var array
      */
     protected static $resources = [
-        Schema::RESOURCE_NAME => [
-            'name'       => Schema::RESOURCE_NAME,
-            'class_name' => Schema::class,
+        DbSchemaResource::RESOURCE_NAME => [
+            'name'       => DbSchemaResource::RESOURCE_NAME,
+            'class_name' => DbSchemaResource::class,
             'label'      => 'Schema',
         ],
         Table::RESOURCE_NAME  => [
@@ -99,69 +79,13 @@ class CouchDb extends BaseNoSqlDbService
 
         try {
             $this->dbConn = @new \couchClient($dsn, $db, $options);
+            /** @noinspection PhpParamsInspection */
+            $this->schema = new Schema($this->dbConn);
+            $this->schema->setCache($this);
+            $this->schema->setExtraStore($this);
         } catch (\Exception $ex) {
             throw new InternalServerErrorException("CouchDb Service Exception:\n{$ex->getMessage()}");
         }
-    }
-
-    /**
-     * Object destructor
-     */
-    public function __destruct()
-    {
-        try {
-            $this->dbConn = null;
-        } catch (\Exception $ex) {
-            error_log("Failed to disconnect from database.\n{$ex->getMessage()}");
-        }
-    }
-
-    /**
-     * @throws \Exception
-     */
-    public function getConnection()
-    {
-        if (!isset($this->dbConn)) {
-            throw new InternalServerErrorException('Database connection has not been initialized.');
-        }
-
-        return $this->dbConn;
-    }
-
-    public function getTableNames($schema = null, $refresh = false, $use_alias = false)
-    {
-        if ($refresh ||
-            (empty($this->tableNames) &&
-                (null === $this->tableNames = $this->getFromCache('table_names')))
-        ) {
-            /** @type TableSchema[] $names */
-            $names = [];
-            $tables = $this->dbConn->listDatabases();
-            foreach ($tables as $table) {
-                $names[strtolower($table)] = new TableSchema(['name' => $table]);
-            }
-            // merge db extras
-            if (!empty($extrasEntries = $this->getSchemaExtrasForTables($tables))) {
-                foreach ($extrasEntries as $extras) {
-                    if (!empty($extraName = strtolower(strval($extras['table'])))) {
-                        if (array_key_exists($extraName, $names)) {
-                            $names[$extraName]->fill($extras);
-                        }
-                    }
-                }
-            }
-            $this->tableNames = $names;
-            $this->addToCache('table_names', $this->tableNames, true);
-        }
-
-        return $this->tableNames;
-    }
-
-    public function refreshTableCache()
-    {
-        $this->removeFromCache('table_names');
-        $this->tableNames = [];
-        $this->tables = [];
     }
 
     /**
@@ -173,7 +97,7 @@ class CouchDb extends BaseNoSqlDbService
 
 //        $refresh = $this->request->queryBool( 'refresh' );
 
-        $name = Schema::RESOURCE_NAME . '/';
+        $name = DbSchemaResource::RESOURCE_NAME . '/';
         $access = $this->getPermissions($name);
         if (!empty($access)) {
             $resources[] = $name;
@@ -183,7 +107,7 @@ class CouchDb extends BaseNoSqlDbService
         $result = $this->dbConn->listDatabases();
         foreach ($result as $name) {
             if ('_' != substr($name, 0, 1)) {
-                $name = Schema::RESOURCE_NAME . '/' . $name;
+                $name = DbSchemaResource::RESOURCE_NAME . '/' . $name;
                 $access = $this->getPermissions($name);
                 if (!empty($access)) {
                     $resources[] = $name;
