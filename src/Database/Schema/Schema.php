@@ -47,9 +47,7 @@ class Schema extends \DreamFactory\Core\Database\Components\Schema
         $tables = [];
         $databases = $this->connection->listDatabases();
         foreach ($databases as $name) {
-            $internalName = $quotedName = $tableName = $name;
-            $settings = compact('tableName', 'name', 'internalName','quotedName');
-            $tables[strtolower($name)] = new TableSchema($settings);
+            $tables[strtolower($name)] = new TableSchema(['name' => $name]);
         }
 
         return $tables;
@@ -94,7 +92,7 @@ class Schema extends \DreamFactory\Core\Database\Components\Schema
     {
         $result = 0;
         $tableInfo = $this->getTable($table);
-        if (($columnInfo = $tableInfo->getColumn($column)) && (DbSimpleTypes::TYPE_VIRTUAL !== $columnInfo->type)) {
+        if (($columnInfo = $tableInfo->getColumn($column)) && !$columnInfo->isVirtual) {
         }
         $this->removeSchemaExtrasForFields($table, $column);
 
