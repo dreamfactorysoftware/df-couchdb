@@ -340,7 +340,6 @@ class Table extends BaseNoSqlDbTableResource
                     $out = static::cleanRecord($result, $fields);
                     break;
 
-                case Verbs::MERGE:
                 case Verbs::PATCH:
                     if (!empty($updates)) {
                         $record = $updates;
@@ -446,7 +445,6 @@ class Table extends BaseNoSqlDbTableResource
                 $out = static::cleanRecords($result, $fields);
                 break;
 
-            case Verbs::MERGE:
             case Verbs::PATCH:
                 $result = $this->getConnection()->asArray()->storeDocs($this->batchRecords, true);
                 if ($requireMore) {
@@ -524,7 +522,6 @@ class Table extends BaseNoSqlDbTableResource
 
                 case Verbs::PUT:
                 case Verbs::PATCH:
-                case Verbs::MERGE:
                 case Verbs::DELETE:
                     $this->getConnection()->asArray()->storeDocs($this->rollbackRecords, true);
                     break;
