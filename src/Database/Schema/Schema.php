@@ -88,18 +88,9 @@ class Schema extends \DreamFactory\Core\Database\Components\Schema
     /**
      * @inheritdoc
      */
-    public function dropColumn($table, $column)
+    public function dropColumns($table, $column)
     {
-        $result = 0;
-        $tableInfo = $this->getTable($table);
-        if (($columnInfo = $tableInfo->getColumn($column)) && !$columnInfo->isVirtual) {
-        }
-        $this->removeSchemaExtrasForFields($table, $column);
-
-        //  Any changes here should refresh cached schema
-        $this->refresh();
-
-        return $result;
+        return false;
     }
 
     /**
