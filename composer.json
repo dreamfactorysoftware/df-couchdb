@@ -3,7 +3,7 @@
   "description": "The DreamFactory(tm) CouchDB Service.",
   "keywords":    [
     "dreamfactory",
-    "dsp",
+    "api",
     "rest",
     "couchdb",
     "nosql",
@@ -29,6 +29,7 @@
     "wiki":   "https://wiki.dreamfactory.com"
   },
   "require":     {
+    "dreamfactory/df-core":     "~0.7.0",
     "dreamfactory/df-database": "~0.1.0",
     "dready92/php-on-couch":    "*"
   },
@@ -39,7 +40,7 @@
   },
   "extra":       {
     "branch-alias": {
-      "dev-develop": "0.6.x-dev"
+      "dev-develop": "0.7.x-dev"
     }
   }
 }
