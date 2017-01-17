@@ -7,6 +7,11 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 ### Changed
 ### Fixed
 
+## [0.7.0] - 2017-01-16
+### Changed
+- Adhere to refactored df-core, see df-database
+- Cleanup schema management issues
+
 ## [0.6.0] - 2016-11-17
 ### Changed
 - Virtual relationships rework to support all relationship types

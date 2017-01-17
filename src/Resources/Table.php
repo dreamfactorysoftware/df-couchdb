@@ -7,7 +7,7 @@ use DreamFactory\Core\Enums\ApiOptions;
 use DreamFactory\Core\Exceptions\RestException;
 use DreamFactory\Core\Exceptions\BadRequestException;
 use DreamFactory\Core\Exceptions\InternalServerErrorException;
-use DreamFactory\Core\Resources\BaseNoSqlDbTableResource;
+use DreamFactory\Core\Database\Resources\BaseNoSqlDbTableResource;
 use DreamFactory\Library\Utility\Enums\Verbs;
 use DreamFactory\Library\Utility\Scalar;
 
@@ -44,6 +44,14 @@ class Table extends BaseNoSqlDbTableResource
     //*************************************************************************
 
     /**
+     * @return \couchClient
+     */
+    protected function getConnection()
+    {
+        return $this->parent->getConnection();
+    }
+
+    /**
      * @return null|CouchDb
      */
     public function getService()
@@ -58,7 +66,7 @@ class Table extends BaseNoSqlDbTableResource
      */
     public function selectTable($name)
     {
-        $this->parent->getConnection()->useDatabase($name);
+        $this->getConnection()->useDatabase($name);
 
         return $name;
     }
@@ -86,10 +94,10 @@ class Table extends BaseNoSqlDbTableResource
     {
         $this->selectTable($table);
         try {
-            $result = $this->parent->getConnection()->asArray()->getAllDocs();
+            $result = $this->getConnection()->asArray()->getAllDocs();
             $rows = array_get($result, 'rows');
             $out = static::cleanRecords($rows, [static::ID_FIELD,static::REV_FIELD], static::DEFAULT_ID_FIELD, true);
-            $this->parent->getConnection()->asArray()->deleteDocs($out, true);
+            $this->getConnection()->asArray()->deleteDocs($out, true);
 
             return ['success' => true];
         } catch (\Exception $ex) {
@@ -127,7 +135,7 @@ class Table extends BaseNoSqlDbTableResource
         try {
             if (!empty($design) && !empty($view)) {
                 $result =
-                    $this->parent->getConnection()->setQueryParameters($extras)->asArray()->getView($design, $view);
+                    $this->getConnection()->setQueryParameters($extras)->asArray()->getView($design, $view);
             } else {
                 if (!$includeDocs) {
                     $includeDocs = static::requireMoreFields($fields, static::DEFAULT_ID_FIELD);
@@ -135,7 +143,7 @@ class Table extends BaseNoSqlDbTableResource
                         $extras['include_docs'] = $includeDocs;
                     }
                 }
-                $result = $this->parent->getConnection()->setQueryParameters($extras)->asArray()->getAllDocs();
+                $result = $this->getConnection()->setQueryParameters($extras)->asArray()->getAllDocs();
             }
 
             $rows = array_get($result, 'rows');
@@ -276,7 +284,7 @@ class Table extends BaseNoSqlDbTableResource
                         return parent::addToTransaction($record, $id);
                     }
 
-                    $result = $this->parent->getConnection()->asArray()->storeDoc((object)$record);
+                    $result = $this->getConnection()->asArray()->storeDoc((object)$record);
 
                     if ($requireMore) {
                         // for returning latest _rev
@@ -313,11 +321,11 @@ class Table extends BaseNoSqlDbTableResource
                     $old = null;
                     if (!isset($record[static::REV_FIELD]) || $rollback) {
                         // unfortunately we need the rev, so go get the latest
-                        $old = $this->parent->getConnection()->asArray()->getDoc($id);
+                        $old = $this->getConnection()->asArray()->getDoc($id);
                         $record[static::REV_FIELD] = array_get($old, static::REV_FIELD);
                     }
 
-                    $result = $this->parent->getConnection()->asArray()->storeDoc((object)$record);
+                    $result = $this->getConnection()->asArray()->storeDoc((object)$record);
 
                     if ($rollback) {
                         // keep the new rev
@@ -332,7 +340,6 @@ class Table extends BaseNoSqlDbTableResource
                     $out = static::cleanRecord($result, $fields);
                     break;
 
-                case Verbs::MERGE:
                 case Verbs::PATCH:
                     if (!empty($updates)) {
                         $record = $updates;
@@ -352,12 +359,12 @@ class Table extends BaseNoSqlDbTableResource
                     }
 
                     // get all fields of record
-                    $old = $this->parent->getConnection()->asArray()->getDoc($id);
+                    $old = $this->getConnection()->asArray()->getDoc($id);
 
                     // merge in changes from $record to $merge
                     $record = array_merge($old, $record);
                     // write back the changes
-                    $result = $this->parent->getConnection()->asArray()->storeDoc((object)$record);
+                    $result = $this->getConnection()->asArray()->storeDoc((object)$record);
 
                     if ($rollback) {
                         // keep the new rev
@@ -377,13 +384,13 @@ class Table extends BaseNoSqlDbTableResource
                         return parent::addToTransaction(null, $id);
                     }
 
-                    $old = $this->parent->getConnection()->asArray()->getDoc($id);
+                    $old = $this->getConnection()->asArray()->getDoc($id);
 
                     if ($rollback) {
                         $this->addToRollback($old);
                     }
 
-                    $this->parent->getConnection()->asArray()->deleteDoc((object)$old);
+                    $this->getConnection()->asArray()->deleteDoc((object)$old);
 
                     $out = static::cleanRecord($old, $fields);
                     break;
@@ -393,7 +400,7 @@ class Table extends BaseNoSqlDbTableResource
                         return parent::addToTransaction(null, $id);
                     }
 
-                    $result = $this->parent->getConnection()->asArray()->getDoc($id);
+                    $result = $this->getConnection()->asArray()->getDoc($id);
 
                     $out = static::cleanRecord($result, $fields);
 
@@ -421,7 +428,7 @@ class Table extends BaseNoSqlDbTableResource
         $out = [];
         switch ($this->getAction()) {
             case Verbs::POST:
-                $result = $this->parent->getConnection()->asArray()->storeDocs($this->batchRecords, true);
+                $result = $this->getConnection()->asArray()->storeDocs($this->batchRecords, true);
                 if ($requireMore) {
                     $result = static::recordArrayMerge($this->batchRecords, $result);
                 }
@@ -430,7 +437,7 @@ class Table extends BaseNoSqlDbTableResource
                 break;
 
             case Verbs::PUT:
-                $result = $this->parent->getConnection()->asArray()->storeDocs($this->batchRecords, true);
+                $result = $this->getConnection()->asArray()->storeDocs($this->batchRecords, true);
                 if ($requireMore) {
                     $result = static::recordArrayMerge($this->batchRecords, $result);
                 }
@@ -438,9 +445,8 @@ class Table extends BaseNoSqlDbTableResource
                 $out = static::cleanRecords($result, $fields);
                 break;
 
-            case Verbs::MERGE:
             case Verbs::PATCH:
-                $result = $this->parent->getConnection()->asArray()->storeDocs($this->batchRecords, true);
+                $result = $this->getConnection()->asArray()->storeDocs($this->batchRecords, true);
                 if ($requireMore) {
                     $result = static::recordArrayMerge($this->batchRecords, $result);
                 }
@@ -450,7 +456,7 @@ class Table extends BaseNoSqlDbTableResource
 
             case Verbs::DELETE:
                 $result =
-                    $this->parent->getConnection()
+                    $this->getConnection()
                         ->setQueryParameters($extras)
                         ->asArray()
                         ->include_docs($requireMore)
@@ -461,7 +467,7 @@ class Table extends BaseNoSqlDbTableResource
                 $rows = array_get($result, 'rows');
                 $out = static::cleanRecords($rows, $fields, static::DEFAULT_ID_FIELD, true);
 
-                $result = $this->parent->getConnection()->asArray()->deleteDocs($out, true);
+                $result = $this->getConnection()->asArray()->deleteDocs($out, true);
                 if (empty($out)) {
                     $out = static::cleanRecords($result, $fields);
                 }
@@ -469,7 +475,7 @@ class Table extends BaseNoSqlDbTableResource
 
             case Verbs::GET:
                 $result =
-                    $this->parent->getConnection()
+                    $this->getConnection()
                         ->setQueryParameters($extras)
                         ->asArray()
                         ->include_docs($requireMore)
@@ -511,14 +517,13 @@ class Table extends BaseNoSqlDbTableResource
         if (!empty($this->rollbackRecords)) {
             switch ($this->getAction()) {
                 case Verbs::POST:
-                    $this->parent->getConnection()->asArray()->deleteDocs($this->rollbackRecords, true);
+                    $this->getConnection()->asArray()->deleteDocs($this->rollbackRecords, true);
                     break;
 
                 case Verbs::PUT:
                 case Verbs::PATCH:
-                case Verbs::MERGE:
                 case Verbs::DELETE:
-                    $this->parent->getConnection()->asArray()->storeDocs($this->rollbackRecords, true);
+                    $this->getConnection()->asArray()->storeDocs($this->rollbackRecords, true);
                     break;
                 default:
                     // nothing to do here, rollback handled on bulk calls

@@ -7,7 +7,7 @@ use DreamFactory\Core\Enums\DbSimpleTypes;
 /**
  * Schema is the class for retrieving metadata information from a MongoDB database (version 4.1.x and 5.x).
  */
-class Schema extends \DreamFactory\Core\Database\Schema\Schema
+class Schema extends \DreamFactory\Core\Database\Components\Schema
 {
     /**
      * @var \couchClient
@@ -42,16 +42,12 @@ class Schema extends \DreamFactory\Core\Database\Schema\Schema
     /**
      * @inheritdoc
      */
-    protected function findTableNames($schema = '', $include_views = true)
+    protected function findTableNames($schema = '')
     {
         $tables = [];
         $databases = $this->connection->listDatabases();
         foreach ($databases as $name) {
-            $tables[strtolower($name)] = new TableSchema([
-                'schemaName' => $schema,
-                'tableName'  => $name,
-                'name'       => $name,
-            ]);
+            $tables[strtolower($name)] = new TableSchema(['name' => $name]);
         }
 
         return $tables;
@@ -73,7 +69,7 @@ class Schema extends \DreamFactory\Core\Database\Schema\Schema
     /**
      * @inheritdoc
      */
-    protected function updateTable($table, $changes)
+    protected function updateTable($tableSchema, $changes)
     {
         // nothing to do here
     }
@@ -92,18 +88,9 @@ class Schema extends \DreamFactory\Core\Database\Schema\Schema
     /**
      * @inheritdoc
      */
-    public function dropColumn($table, $column)
+    public function dropColumns($table, $column)
     {
-        $result = 0;
-        $tableInfo = $this->getTable($table);
-        if (($columnInfo = $tableInfo->getColumn($column)) && (DbSimpleTypes::TYPE_VIRTUAL !== $columnInfo->type)) {
-        }
-        $this->removeSchemaExtrasForFields($table, $column);
-
-        //  Any changes here should refresh cached schema
-        $this->refresh();
-
-        return $result;
+        return false;
     }
 
     /**
