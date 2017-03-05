@@ -487,7 +487,7 @@ class Table extends BaseNoSqlDbTableResource
                 $out = static::cleanRecords($rows, $fields, static::DEFAULT_ID_FIELD, true);
 
                 if (count($this->batchIds) !== count($out)) {
-                    throw new BadRequestException('Batch Error: Not all requested ids were found to retrieve.');
+                    throw new BadRequestException('Batch Error: Not all requested records could be retrieved.');
                 }
                 break;
 
