@@ -391,7 +391,6 @@ class Table extends BaseNoSqlDbTableResource
                     }
 
                     $this->getConnection()->asArray()->deleteDoc((object)$old);
-
                     $out = static::cleanRecord($old, $fields);
                     break;
 
@@ -401,9 +400,7 @@ class Table extends BaseNoSqlDbTableResource
                     }
 
                     $result = $this->getConnection()->asArray()->getDoc($id);
-
                     $out = static::cleanRecord($result, $fields);
-
                     break;
             }
         } catch (\couchException $ex) {
@@ -499,14 +496,6 @@ class Table extends BaseNoSqlDbTableResource
         $this->batchRecords = [];
 
         return $out;
-    }
-
-    /**
-     * {@inheritdoc}
-     */
-    protected function addToRollback($record)
-    {
-        return parent::addToRollback($record);
     }
 
     /**
