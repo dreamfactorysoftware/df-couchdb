@@ -1,6 +1,7 @@
 <?php
 namespace DreamFactory\Core\CouchDb\Models;
 
+use DreamFactory\Core\Database\Components\SupportsUpsert;
 use DreamFactory\Core\Exceptions\BadRequestException;
 use DreamFactory\Core\Models\BaseServiceConfigModel;
 use Illuminate\Database\Query\Builder;
@@ -16,25 +17,27 @@ use Illuminate\Database\Query\Builder;
  */
 class CouchDbConfig extends BaseServiceConfigModel
 {
+    use SupportsUpsert;
+
     protected $table = 'couchdb_config';
 
     protected $fillable = ['service_id', 'dsn', 'options'];
 
     protected $casts = ['options' => 'array'];
 
-    public static function validateConfig($config, $create = true)
+    public function validate($data, $throwException = true)
     {
-        if ((null === array_get($config, 'dsn'))) {
-            if ((null === array_get($config, 'options.db'))) {
+        if ((null === array_get($data, 'dsn'))) {
+            if ((null === array_get($data, 'options.db'))) {
                 throw new BadRequestException('Database name must be included in the \'dsn\' or as an \'option\' attribute.');
             }
         }
 
-        return true;
+        return parent::validate($data, $throwException);
     }
 
     /**
-     * @param array $schema
+     * {@inheritdoc}
      */
     protected static function prepareConfigSchemaField(array &$schema)
     {
