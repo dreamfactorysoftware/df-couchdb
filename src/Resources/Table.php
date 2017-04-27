@@ -8,8 +8,7 @@ use DreamFactory\Core\Exceptions\RestException;
 use DreamFactory\Core\Exceptions\BadRequestException;
 use DreamFactory\Core\Exceptions\InternalServerErrorException;
 use DreamFactory\Core\Database\Resources\BaseNoSqlDbTableResource;
-use DreamFactory\Library\Utility\Enums\Verbs;
-use DreamFactory\Library\Utility\Scalar;
+use DreamFactory\Core\Enums\Verbs;
 
 class Table extends BaseNoSqlDbTableResource
 {
@@ -130,7 +129,7 @@ class Table extends BaseNoSqlDbTableResource
         }
         $design = array_get($extras, 'design');
         $view = array_get($extras, 'view');
-        $includeDocs = Scalar::boolval(array_get($extras, 'include_docs'));
+        $includeDocs = array_get_bool($extras, 'include_docs');
         $fields = array_get($extras, ApiOptions::FIELDS);
         try {
             if (!empty($design) && !empty($view)) {
@@ -148,7 +147,7 @@ class Table extends BaseNoSqlDbTableResource
 
             $rows = array_get($result, 'rows');
             $out = static::cleanRecords($rows, $fields, static::DEFAULT_ID_FIELD, $includeDocs);
-            if (Scalar::boolval(array_get($extras, ApiOptions::INCLUDE_COUNT, false)) ||
+            if (array_get_bool($extras, ApiOptions::INCLUDE_COUNT) ||
                 (0 != intval(array_get($result, 'offset')))
             ) {
                 $out['meta']['count'] = intval(array_get($result, 'total_rows'));
@@ -420,7 +419,7 @@ class Table extends BaseNoSqlDbTableResource
         }
 
         $fields = array_get($extras, ApiOptions::FIELDS);
-        $requireMore = Scalar::boolval(array_get($extras, 'require_more'));
+        $requireMore = array_get_bool($extras, 'require_more');
 
         $out = [];
         switch ($this->getAction()) {
