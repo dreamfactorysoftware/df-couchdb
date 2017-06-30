@@ -40,33 +40,15 @@ class CouchDb extends BaseDbService
     //	Methods
     //*************************************************************************
 
-    /**
-     * Create a new CouchDbSvc
-     *
-     * @param array $settings
-     *
-     * @throws \InvalidArgumentException
-     * @throws \Exception
-     */
-    public function __construct($settings = [])
+    protected function initializeConnection()
     {
-        parent::__construct($settings);
-
-        $config = (array)array_get($settings, 'config');
-        Session::replaceLookups($config, true);
-
-        $dsn = strval(array_get($config, 'dsn'));
+        $dsn = strval(array_get($this->config, 'dsn'));
         if (empty($dsn)) {
             $dsn = 'http://localhost:5984';
         }
 
-        $options = [];
-        if (isset($config['options'])) {
-            $options = $config['options'];
-        }
-
-        $db = isset($options['db']) ? $options['db'] : null;
-        if (!isset($db)) {
+        $options = (array)array_get($this->config, 'options', []);
+        if (!empty($db = array_get($options, 'db'))) {
             //  Attempt to find db in connection string
             $temp = trim(strstr($dsn, '//'), '/');
             $db = strstr($temp, '/');
