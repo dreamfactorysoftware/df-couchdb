@@ -6,7 +6,6 @@ use DreamFactory\Core\CouchDb\Resources\Table;
 use DreamFactory\Core\Exceptions\InternalServerErrorException;
 use DreamFactory\Core\Database\Resources\DbSchemaResource;
 use DreamFactory\Core\Database\Services\BaseDbService;
-use DreamFactory\Core\Utility\Session;
 
 /**
  * CouchDb
@@ -63,8 +62,6 @@ class CouchDb extends BaseDbService
             $this->dbConn = @new \couchClient($dsn, $db, $options);
             /** @noinspection PhpParamsInspection */
             $this->schema = new Schema($this->dbConn);
-            $this->schema->setCache($this);
-            $this->schema->setExtraStore($this);
         } catch (\Exception $ex) {
             throw new InternalServerErrorException("CouchDb Service Exception:\n{$ex->getMessage()}");
         }
