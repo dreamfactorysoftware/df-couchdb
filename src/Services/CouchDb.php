@@ -39,6 +39,13 @@ class CouchDb extends BaseDbService
     //	Methods
     //*************************************************************************
 
+    public function __construct($settings = [])
+    {
+        parent::__construct($settings);
+
+        $this->setConfigBasedCachePrefix(array_get($this->config, 'db') . ':');
+    }
+
     protected function initializeConnection()
     {
         $dsn = strval(array_get($this->config, 'dsn'));
