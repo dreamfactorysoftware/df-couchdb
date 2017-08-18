@@ -2,7 +2,6 @@
 namespace DreamFactory\Core\CouchDb\Database\Schema;
 
 use DreamFactory\Core\Database\Schema\TableSchema;
-use DreamFactory\Core\Enums\DbSimpleTypes;
 
 /**
  * Schema is the class for retrieving metadata information from a MongoDB database (version 4.1.x and 5.x).
@@ -56,7 +55,7 @@ class Schema extends \DreamFactory\Core\Database\Components\Schema
     /**
      * @inheritdoc
      */
-    protected function createTable($table, $options)
+    public function createTable($table, $options)
     {
         if (empty($tableName = array_get($table, 'name'))) {
             throw new \Exception("No valid name exist in the received table schema.");
@@ -69,7 +68,7 @@ class Schema extends \DreamFactory\Core\Database\Components\Schema
     /**
      * @inheritdoc
      */
-    protected function updateTable($tableSchema, $changes)
+    public function updateTable($tableSchema, $changes)
     {
         // nothing to do here
     }
@@ -96,7 +95,7 @@ class Schema extends \DreamFactory\Core\Database\Components\Schema
     /**
      * @inheritdoc
      */
-    protected function createFieldReferences($references)
+    public function createFieldReferences($references)
     {
         // Do nothing here for now
     }
@@ -104,7 +103,7 @@ class Schema extends \DreamFactory\Core\Database\Components\Schema
     /**
      * @inheritdoc
      */
-    protected function createFieldIndexes($indexes)
+    public function createFieldIndexes($indexes)
     {
         // Do nothing here for now
     }
