@@ -1,10 +1,9 @@
 <?php
 namespace DreamFactory\Core\CouchDb\Models;
 
-use DreamFactory\Core\Database\Components\SupportsUpsert;
+use DreamFactory\Core\Database\Components\SupportsUpsertAndCache;
 use DreamFactory\Core\Exceptions\BadRequestException;
 use DreamFactory\Core\Models\BaseServiceConfigModel;
-use Illuminate\Database\Query\Builder;
 
 /**
  * CouchDbConfig
@@ -13,11 +12,10 @@ use Illuminate\Database\Query\Builder;
  * @property string  $dsn
  * @property string  $options
  *
- * @method static Builder|CouchDbConfig whereServiceId($value)
  */
 class CouchDbConfig extends BaseServiceConfigModel
 {
-    use SupportsUpsert;
+    use SupportsUpsertAndCache;
 
     protected $table = 'couchdb_config';
 
