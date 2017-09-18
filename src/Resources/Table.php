@@ -420,6 +420,7 @@ class Table extends BaseNoSqlDbTableResource
 
         $fields = array_get($extras, ApiOptions::FIELDS);
         $requireMore = array_get_bool($extras, 'require_more');
+        $ssFilters = array_get($extras, 'ss_filters');
 
         $out = [];
         switch ($this->getAction()) {
