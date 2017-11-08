@@ -40,6 +40,11 @@
   "extra":       {
     "branch-alias": {
       "dev-develop": "0.14.x-dev"
+    },
+    "laravel": {
+      "providers": [
+        "DreamFactory\\Core\\CouchDb\\ServiceProvider"
+      ]
     }
   }
 }
