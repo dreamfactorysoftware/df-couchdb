@@ -7,7 +7,7 @@ use DreamFactory\Core\CouchDb\Resources\Schema;
 use DreamFactory\Core\CouchDb\Resources\Table;
 use DreamFactory\Core\Testing\TestServiceRequest;
 
-class CouchDbTest extends \DreamFactory\Core\Testing\DbServiceTestCase
+class CouchDbTest extends \DreamFactory\Core\Database\Testing\DbServiceTestCase
 {
     /**
      * @const string

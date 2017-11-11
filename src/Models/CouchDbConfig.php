@@ -1,7 +1,7 @@
 <?php
 namespace DreamFactory\Core\CouchDb\Models;
 
-use DreamFactory\Core\Database\Components\SupportsUpsertAndCache;
+use DreamFactory\Core\Database\Components\SupportsExtraDbConfigs;
 use DreamFactory\Core\Exceptions\BadRequestException;
 use DreamFactory\Core\Models\BaseServiceConfigModel;
 
@@ -15,7 +15,7 @@ use DreamFactory\Core\Models\BaseServiceConfigModel;
  */
 class CouchDbConfig extends BaseServiceConfigModel
 {
-    use SupportsUpsertAndCache;
+    use SupportsExtraDbConfigs;
 
     protected $table = 'couchdb_config';
 
