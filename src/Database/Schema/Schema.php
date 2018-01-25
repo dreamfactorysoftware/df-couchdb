@@ -1,6 +1,7 @@
 <?php
 namespace DreamFactory\Core\CouchDb\Database\Schema;
 
+use DreamFactory\Core\Database\Schema\ColumnSchema;
 use DreamFactory\Core\Database\Schema\TableSchema;
 
 /**
@@ -16,32 +17,35 @@ class Schema extends \DreamFactory\Core\Database\Components\Schema
     /**
      * @inheritdoc
      */
-    protected function findColumns(TableSchema $table)
+    protected function loadTableColumns(TableSchema $table)
     {
         $this->connection->useDatabase($table->name);
         $table->native = $this->connection->asArray()->getDatabaseInfos();
-        $columns = [
-            [
-                'name'           => '_id',
-                'db_type'        => 'string',
-                'is_primary_key' => true,
-                'auto_increment' => true,
-            ],
-            [
-                'name'           => '_rev',
-                'db_type'        => 'string',
-                'is_primary_key' => false,
-                'auto_increment' => false,
-            ]
-        ];
+        $table->addPrimaryKey('_id');
 
-        return $columns;
+        $c = new ColumnSchema([
+            'name'           => '_id',
+            'db_type'        => 'string',
+            'is_primary_key' => true,
+            'auto_increment' => true,
+        ]);
+        $c->quotedName = $this->quoteColumnName($c->name);
+        $table->addColumn($c);
+
+        $c = new ColumnSchema([
+            'name'           => '_rev',
+            'db_type'        => 'string',
+            'is_primary_key' => false,
+            'auto_increment' => false,
+        ]);
+        $c->quotedName = $this->quoteColumnName($c->name);
+        $table->addColumn($c);
     }
 
     /**
      * @inheritdoc
      */
-    protected function findTableNames($schema = '')
+    protected function getTableNames($schema = '')
     {
         $tables = [];
         $databases = $this->connection->listDatabases();
