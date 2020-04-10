@@ -31,7 +31,7 @@
   "minimum-stability": "dev",
   "prefer-stable":     true,
   "require":     {
-    "dreamfactory/df-database": "~0.11.1",
+    "dreamfactory/df-database": "~0.11.2",
     "dready92/php-on-couch":    "*"
   },
   "autoload":    {
