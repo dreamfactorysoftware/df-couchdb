@@ -43,7 +43,7 @@ class Table extends BaseNoSqlDbTableResource
     //*************************************************************************
 
     /**
-     * @return \couchClient
+     * @return PHPOnCouch\CouchClient
      */
     protected function getConnection()
     {
