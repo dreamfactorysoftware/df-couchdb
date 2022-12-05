@@ -10,7 +10,7 @@ use DreamFactory\Core\Database\Schema\TableSchema;
 class Schema extends \DreamFactory\Core\Database\Components\Schema
 {
     /**
-     * @var \couchClient
+     * @var PHPOnCouch\CouchClient
      */
     protected $connection;
 

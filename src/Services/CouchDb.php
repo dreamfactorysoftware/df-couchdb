@@ -5,6 +5,7 @@ use DreamFactory\Core\CouchDb\Database\Schema\Schema;
 use DreamFactory\Core\CouchDb\Resources\Table;
 use DreamFactory\Core\Database\Services\BaseDbService;
 use DreamFactory\Core\Exceptions\InternalServerErrorException;
+use PHPOnCouch\CouchClient;
 
 /**
  * CouchDb
@@ -54,7 +55,7 @@ class CouchDb extends BaseDbService
         }
 
         try {
-            $this->dbConn = @new \couchClient($dsn, $db, $options);
+            $this->dbConn = new CouchClient($dsn, $db, $options);
             /** @noinspection PhpParamsInspection */
             $this->schema = new Schema($this->dbConn);
         } catch (\Exception $ex) {
