@@ -27,9 +27,9 @@ class CouchDbTest extends \DreamFactory\Core\Database\Testing\DbServiceTestCase
      */
     protected $service = null;
 
-    public function setup()
+    public function setUp(): void
     {
-        parent::setup();
+        parent::setUp();
 
         $options =
             ['username' => env('COUCHDB_USER'), 'password' => env('COUCHDB_PASSWORD'), 'db' => env('COUCHDB_DB')];
@@ -45,7 +45,7 @@ class CouchDbTest extends \DreamFactory\Core\Database\Testing\DbServiceTestCase
         );
     }
 
-    public function tearDown()
+    public function tearDown(): void
     {
         parent::tearDown();
     }
